@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Functions>
+  <Function Name="DBBAH">
+    <Setting Key="SystemSettings_Select" SpName="SystemSettings_Select" DbName="DBBAH.bodb02.bodbAdminNet" />
+    <Setting Key="BalanceTriggerSiteDBConfig_Select" SpName="BalanceTriggerSiteDBConfig_Select" DbName="DBBAH.bodb02.bodbAdminNet" />
+    <Setting Key="BalanceTriggerSiteDB_Insert" SpName="BalanceTriggerSiteDB_Insert" DbName="DBBAH.bodb02.bodbAdminNet" />
+  </Function>
+  <Function Name="SiteDB">
+    <Setting Key="SiteDB_BalanceTrigger_Select_SiteDB01" SpName="SiteDB_BalanceTrigger_Select" DbName="DBSIG.SiteDB01.bodb02.bodbAdminNet" />
+    <Setting Key="SiteDB_BalanceTrigger_Select_SiteDB02" SpName="SiteDB_BalanceTrigger_Select" DbName="DBSIG.SiteDB02.bodb02.bodbAdminNet" />
+  </Function>
+</Functions>
