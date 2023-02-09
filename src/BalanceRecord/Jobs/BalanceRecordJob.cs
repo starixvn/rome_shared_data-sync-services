@@ -40,7 +40,7 @@ public sealed class BalanceRecordJob : IntervalBackgroundService
         }
     }
 
-    protected override async Task<bool> ExecuteJob()
+    public override async Task<bool> ExecuteJob()
     {
         if (await balanceRecordService.IsStopJob(scheduleJob.Name, scheduleJob.IsTest))
         {

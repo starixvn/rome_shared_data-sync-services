@@ -135,5 +135,5 @@ public abstract class IntervalBackgroundService : BackgroundService
         await base.StopAsync(cancellationToken);
     }
 
-    protected abstract Task<bool> ExecuteJob();
+    public abstract Task<bool> ExecuteJob();
 }
