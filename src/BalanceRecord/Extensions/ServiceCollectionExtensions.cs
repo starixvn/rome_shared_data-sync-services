@@ -16,8 +16,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IBalanceRecordService, BalanceRecordService>();
 
         var isTest = configuration.GetValue<bool>("IsTest");
-        configuration.GetSection("ScheduleJobs")
-            .Get<ScheduleJob[]>()
+        configuration
+            .GetSection("ScheduleJobs")
+            .Get<ScheduleJob[]>()?
             .Where(job => job.IsActive)
             .ToList()
             .ForEach(job =>

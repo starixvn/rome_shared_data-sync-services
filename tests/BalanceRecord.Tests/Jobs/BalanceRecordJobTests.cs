@@ -28,7 +28,6 @@ public class BalanceRecordJobTests
                 new ScheduleJobParameter { Key = "BatchSize", Value = "2000" }
             },
             DelayExecutionTimeInSeconds = 1,
-            IsLogAfterExecuteJob = true,
             IsActive = true
         };
         loggerService = Substitute.For<ILoggerService>();
@@ -55,7 +54,7 @@ public class BalanceRecordJobTests
 
         // Assert
         await loggerService.Received().Info(Arg.Is<string>(
-            arg => "SiteDB01 is set stopped from DB." == arg
+            arg => "[SiteDB01] is set stopped from DB." == arg
         ));
     }
 
@@ -75,7 +74,7 @@ public class BalanceRecordJobTests
 
         // Assert
         await loggerService.Received().Info(Arg.Is<string>(
-            arg => "SiteDB01: LastRowInserted is NULL." == arg
+            arg => "[SiteDB01]: LastRowInserted is NULL." == arg
         ));
     }
 

@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Web;
 using Fanex.Data;
+using Microsoft.Extensions.Logging;
 using Shared.Configuration;
 
 namespace Shared.Services;
@@ -12,15 +13,18 @@ public interface ILoggerService
     Task Info(string message);
 
     Task Error(Exception exception, ScheduleJob scheduleJob, string methodName, string message = "");
+
+    void InfoConsole(string message, params object[] args);
 }
 
 [ExcludeFromCodeCoverage]
 public sealed class LoggerService : ILoggerService
 {
     private readonly Fanex.Logging.ILogger logger;
+    private readonly ILogger<LoggerService> loggerConsole;
 
-    public LoggerService(Fanex.Logging.ILogger logger)
-        => this.logger = logger;
+    public LoggerService(Fanex.Logging.ILogger logger, ILogger<LoggerService> loggerConsole)
+        => (this.logger, this.loggerConsole) = (logger, loggerConsole);
 
     public Task Info(string message) => logger.InfoAsync(message);
 
@@ -81,4 +85,7 @@ public sealed class LoggerService : ILoggerService
             .Append("LineNumber: ").AppendLine(sqlException.LineNumber.ToString())
             .AppendLine();
     }
+
+    public void InfoConsole(string message, params object[] args)
+        => loggerConsole.LogInformation(message, args);
 }

@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Hosting;
 using ONEbook.UM.Configurations;
-using ONEbook.UM.Models;
 using ONEbook.UM.Services;
 using Shared.Configuration;
 using Shared.Services;
@@ -10,75 +8,59 @@ using Shared.Services;
 namespace Shared.Jobs;
 
 [ExcludeFromCodeCoverage]
-public abstract class IntervalBackgroundService : BackgroundService
+public abstract class IntervalBackgroundService : BackgroundServiceBase
 {
     private const int OneSecond = 1000;
     private const int StartMultiplier = 1;
     private const int TwoMultiplier = 2;
     private const int MaxMultiplier = 10;
-
-    protected readonly ScheduleJob scheduleJob;
-    protected readonly ILoggerService loggerService;
-    private readonly IMaintenanceService maintenanceService;
-    private readonly int umDelayTimeInSeconds;
+    private int multiplier = StartMultiplier;
 
     protected IntervalBackgroundService(
         ScheduleJob scheduleJob,
         ILoggerService loggerService,
         IMaintenanceService maintenanceService,
         UMClientConfiguration umClientConfiguration)
+        : base(scheduleJob, loggerService, maintenanceService, umClientConfiguration)
     {
-        this.scheduleJob = scheduleJob;
-        this.loggerService = loggerService;
-        this.maintenanceService = maintenanceService;
-        umDelayTimeInSeconds = umClientConfiguration.ResultCacheDuration;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        if (!scheduleJob.IsActive)
-        {
-            return;
-        }
-
-        await loggerService.Info($"{scheduleJob.JobInfo} is running.");
-        var multiplier = StartMultiplier;
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            multiplier = await ExecuteInternal(multiplier);
-            await Task.Delay(multiplier * OneSecond, stoppingToken);
-        }
-    }
-
-    private async Task<int> ExecuteInternal(int multiplier)
+    public override async Task ExecuteInternal(CancellationToken stoppingToken)
     {
         var umInfo = await GetUnderMaintenanceTime();
 
         if (umInfo.IsUnderMaintenanceTime)
         {
-            await loggerService.Info(
-                $"{scheduleJob.JobInfo} is Under Maintenance from {umInfo.From} to {umInfo.To}.");
+            await loggerService.Info($"{scheduleJob.JobInfo} is Under Maintenance from {umInfo.From} to {umInfo.To}.");
 
-            return umDelayTimeInSeconds;
+            multiplier = umDelayTimeInSeconds;
+        }
+        else
+        {
+            multiplier = await ExecuteJobAndCalculateMultiplier(multiplier);
         }
 
+        await Task.Delay(multiplier * OneSecond, stoppingToken);
+    }
+
+    private async Task<int> ExecuteJobAndCalculateMultiplier(int multiplier)
+    {
         var sw = Stopwatch.StartNew();
 
         try
         {
             var hasData = await ExecuteJob();
             var calculatedMultiplier = CalculateMultiplier(hasData, multiplier);
+            sw.Stop();
 
-            if (scheduleJob.IsLogAfterExecuteJob)
-            {
-                sw.Stop();
-
-                var logInfo = hasData
-                    ? $"Total execution time {sw.ElapsedMilliseconds} milliseconds"
-                    : "No Data to Import";
-                await loggerService.Info($"{scheduleJob.JobInfo}: {logInfo}. SleepTimeInSeconds={calculatedMultiplier}");
-            }
+            var logInfo = hasData
+                ? $"Total execution time {sw.ElapsedMilliseconds} milliseconds"
+                : "No Data to Import";
+            loggerService.InfoConsole(
+                "{JobInfo} {logInfo}. SleepTimeInSeconds={calculatedMultiplier}",
+                scheduleJob.JobInfo,
+                logInfo,
+                calculatedMultiplier);
 
             return calculatedMultiplier;
         }
@@ -88,20 +70,6 @@ public abstract class IntervalBackgroundService : BackgroundService
         }
 
         return StartMultiplier;
-    }
-
-    private async Task<UnderMaintenanceTime> GetUnderMaintenanceTime()
-    {
-        try
-        {
-            return await maintenanceService.GetUnderMaintenanceTimeAsync();
-        }
-        catch (Exception ex)
-        {
-            await loggerService.Error(ex, scheduleJob, nameof(GetUnderMaintenanceTime), "Could not get UM information.");
-        }
-
-        return new UnderMaintenanceTime();
     }
 
     private int CalculateMultiplier(bool hasData, int multiplier)
@@ -121,18 +89,6 @@ public abstract class IntervalBackgroundService : BackgroundService
         return multiplier > MaxMultiplier
             ? MaxMultiplier
             : multiplier;
-    }
-
-    private Task HandleException(Exception exception)
-        => exception.Message.Contains("The account is disabled", StringComparison.OrdinalIgnoreCase)
-        ? loggerService.Info($"{scheduleJob.JobInfo}: {exception.Message}")
-        : loggerService.Error(exception, scheduleJob, nameof(ExecuteInternal));
-
-    public override async Task StopAsync(CancellationToken cancellationToken)
-    {
-        await loggerService.Info($"{scheduleJob.JobInfo} is stopping.");
-
-        await base.StopAsync(cancellationToken);
     }
 
     public abstract Task<bool> ExecuteJob();
