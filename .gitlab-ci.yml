@@ -2,3 +2,8 @@ include:
   - project: ci/core-cicd
     ref: main
     file: nexcel.gitlab-ci.yml
+
+  
+  - project: "ci/repos-ci/rome_shared_autotransfer" # Refer to field CI Script Repo at step #3
+    ref: master
+    file: "gitlab-ci-mixing.yml"
