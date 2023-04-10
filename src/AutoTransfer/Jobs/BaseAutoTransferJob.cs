@@ -1,3 +1,6 @@
+using AutoTransfer.Models;
+using AutoTransfer.Services;
+using Microsoft.Extensions.Options;
 using ONEbook.UM.Configurations;
 using ONEbook.UM.Services;
 using Shared.Configuration;
@@ -8,18 +11,68 @@ namespace AutoTransfer.Jobs;
 
 public class BaseAutoTransferJob : BackgroundServiceBase
 {
+    public readonly JobsSettingsModel settings;
+    public readonly ITransferService transferService;
+
     public BaseAutoTransferJob(
         ScheduleJob scheduleJob,
         ILoggerService loggerService,
         IMaintenanceService maintenanceService,
-        UMClientConfiguration umClientConfiguration)
+        UMClientConfiguration umClientConfiguration,
+        ITransferService transferService,
+        IOptions<JobsSettingsModel> settings)
         : base(scheduleJob, loggerService, maintenanceService, umClientConfiguration)
     {
+        this.settings = settings.Value;
+        this.transferService = transferService;
     }
 
     public override async Task ExecuteInternal(CancellationToken stoppingToken)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task WaitForSystemUM(CancellationToken stoppingToken)
+    {
+        if (settings.IgnoreSystemUM)
+        {
+            return;
+        }
+
+        while (true)
+        {
+            var umInfo = await GetUnderMaintenanceTime();
+
+            if (!umInfo.IsUnderMaintenanceTime)
+            {
+                break;
+            }
+
+            await loggerService.Info($"{scheduleJob.JobInfo} is Under Maintenance from {umInfo.From} to {umInfo.To}.");
+
+            var endTime = DateTime.Parse(umInfo.To);
+            var currentTime = DateTime.Now;
+            var timeDelay = endTime - currentTime;
+            loggerService.InfoConsole($"{scheduleJob.JobInfo} delay to {timeDelay}");
+            await Task.Delay(timeDelay, stoppingToken);
+        }
+    }
+
+    public async Task WaitForBalanceUpProcess(CancellationToken stoppingToken)
+    {
+        while (true)
+        {
+            var endTime = await transferService.CheckBalanceUpProcess();
+            if (endTime == null)
+            {
+                break;
+            }
+
+            var currentTime = DateTime.Now;
+            var timeDelay = endTime.Value - currentTime;
+            loggerService.InfoConsole($"{scheduleJob.JobInfo} delay to {timeDelay}");
+            await Task.Delay(timeDelay, stoppingToken);
+        }
     }
 
     public bool IsRunTime()

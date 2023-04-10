@@ -10,9 +10,6 @@ namespace AutoTransfer.Jobs
 {
     public sealed class ResumeTransferRetryJob : BaseAutoTransferJob
     {
-        private readonly JobsSettingsModel settings;
-        private readonly ITransferService transferService;
-
         public ResumeTransferRetryJob(
             ScheduleJob[] scheduleJobs,
             ILoggerService loggerService,
@@ -24,10 +21,10 @@ namespace AutoTransfer.Jobs
                 scheduleJobs.FirstOrDefault(job => job.Name.Equals(nameof(ResumeTransferRetryJob), StringComparison.OrdinalIgnoreCase)) ?? new ScheduleJob(),
                 loggerService,
                 maintenanceService,
-                umClientConfiguration)
+                umClientConfiguration,
+                transferService,
+                settings)
         {
-            this.settings = settings.Value;
-            this.transferService = transferService;
         }
 
         public override async Task ExecuteInternal(CancellationToken stoppingToken)
@@ -44,13 +41,15 @@ namespace AutoTransfer.Jobs
                 return;
             }
 
+            await WaitForSystemUM(stoppingToken);
+            await WaitForBalanceUpProcess(stoppingToken);
             bool isComplete = false;
 
             while (!isComplete)
             {
                 try
                 {
-                    RetryBatchesModel retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads);
+                    var retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads);
 
                     if (retryInfo.IsCompleted)
                     {
