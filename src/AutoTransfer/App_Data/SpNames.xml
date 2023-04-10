@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Functions>
+  <Function Name="Auto Transfer">
+    <Setting Key="SystemSettings_Select" SpName="SystemSettings_Select" DbName="DBBAH.bodb02.bodbAdminNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_Start" SpName="Age_ClearBalanceCust_Job_Start_xtest" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_BatchSel" SpName="Age_ClearBalanceCust_Job_BatchSel_xtest" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_BatchProcess" SpName="Age_ClearBalanceCust_Job_BatchProcess_xtest" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_ReTrySel" SpName="Age_ClearBalanceCust_Job_ReTrySel_xtest" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    
+    <Setting Key="Age_ClearBalanceCust_Job_ProcessExport" SpName="Age_ClearBalanceCust_Job_ProcessExport_xtest" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport_xtest" DbName="DBARC.bodb_Archive.BODBDownlineNet" />
+ </Function>
+</Functions>
