@@ -9,5 +9,6 @@
     
     <Setting Key="Age_ClearBalanceCust_Job_ProcessExport" SpName="Age_ClearBalanceCust_Job_ProcessExport_xtest" DbName="DBTXN.bodb02.BODBDownlineNet" />
     <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport_xtest" DbName="DBARC.bodb_Archive.BODBDownlineNet" />
+    <Setting Key="Acc_CheckProcessingData" SpName="Acc_CheckProcessingData" DbName="DBTXN.bodb02.BODBDownlineNet" />
  </Function>
 </Functions>

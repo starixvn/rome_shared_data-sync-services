@@ -11,8 +11,6 @@ namespace AutoTransfer.Jobs;
 
 public sealed class ResumeTransferJob : BaseAutoTransferJob
 {
-    private readonly ITransferService transferService;
-    private readonly JobsSettingsModel settings;
     private const string runningMode = RunningModeConstant.Resume;
 
     public ResumeTransferJob(
@@ -26,10 +24,10 @@ public sealed class ResumeTransferJob : BaseAutoTransferJob
             scheduleJobs.FirstOrDefault(job => job.Name.Equals(nameof(ResumeTransferJob), StringComparison.OrdinalIgnoreCase)) ?? new ScheduleJob(),
             loggerService,
             maintenanceService,
-            umClientConfiguration)
+            umClientConfiguration,
+            transferService,
+            settings)
     {
-        this.settings = settings.Value;
-        this.transferService = transferService;
     }
 
     public override async Task ExecuteInternal(CancellationToken stoppingToken)
@@ -46,6 +44,8 @@ public sealed class ResumeTransferJob : BaseAutoTransferJob
             return;
         }
 
+        await WaitForSystemUM(stoppingToken);
+        await WaitForBalanceUpProcess(stoppingToken);
         var startModel = await transferService.Start(settings.PairOfBatch, runningMode);
 
         var isComplete = startModel.TotalBatch == 0;

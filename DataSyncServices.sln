@@ -20,6 +20,7 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoTransfer.Test", "tests\AutoTransfer.Test\AutoTransfer.Test.csproj", "{5582D03E-2BCD-4234-8210-2C22A84C68C3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcurrentUser", "src\ConcurrentUser\ConcurrentUser.csproj", "{BD1EB389-2951-4519-841E-1DB5D0DBED1A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoTransfer", "src\AutoTransfer\AutoTransfer.csproj", "{565ED6E6-82C8-4079-BECF-B1A397B817F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
