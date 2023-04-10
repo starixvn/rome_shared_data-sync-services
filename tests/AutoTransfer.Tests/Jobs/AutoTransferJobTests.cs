@@ -5,6 +5,7 @@ using AutoTransfer.Services;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using ONEbook.UM.Configurations;
+using ONEbook.UM.Models;
 using ONEbook.UM.Services;
 using Shared.Configuration;
 using Shared.Services;
@@ -15,6 +16,8 @@ namespace AutoTransfer.Tests.Jobs;
 
 public class AutoTransferJobTests
 {
+    private int currentHour = DateTime.Now.Hour;
+    private int currentMin = DateTime.Now.Minute + 1;
     private readonly ILoggerService loggerService;
     private readonly IMaintenanceService maintenanceService;
     private readonly ITransferService transferService;
@@ -25,7 +28,12 @@ public class AutoTransferJobTests
     {
 
         settings = Substitute.For<IOptions<JobsSettingsModel>>();
+        settings.Value.Returns(new JobsSettingsModel()
+        {
+            NumberOfThreads = 1,
+            PairOfBatch = 200,
 
+        });
         loggerService = Substitute.For<ILoggerService>();
         maintenanceService = Substitute.For<IMaintenanceService>();
         transferService = Substitute.For<ITransferService>();
@@ -42,22 +50,21 @@ public class AutoTransferJobTests
     [Fact]
     public async Task ExecuteInternal_IsCompleteIsTrue_CallsLogInfo()
     {
+        // Arrange
         ScheduleJob scheduleJob = new ScheduleJob()
         {
             Name = "AutoTransferJob",
             DelayExecutionTimeInSeconds = 1,
             IsActive = true,
-            DelayExecutionAtExactlyTime = new TimeOnly(5, 12, 57),
+            DelayExecutionAtExactlyTime = new TimeOnly(currentHour, currentMin, 0),
         };
-        settings.Value.Returns(new JobsSettingsModel()
-        {
-            NumberOfThreads = 1,
-            PairOfBatch = 200,
 
-        });
         CancellationTokenSource cts = new();
         CancellationToken cancellationToken = cts.Token;
-        // Arrange
+        maintenanceService.GetUnderMaintenanceTimeAsync().Returns(Task.FromResult(new UnderMaintenanceTime()
+        {
+            IsUnderMaintenanceTime = false,
+        }));
         transferService
             .Start(settings.Value.PairOfBatch, RunningModeConstant.Normal)
             .Returns(Task.FromResult(new AutoTransferStartModel()
@@ -172,34 +179,37 @@ public class AutoTransferJobTests
 
     private ScheduleJob[] GetListScheduleJob()
     {
+        int currentHour = DateTime.Now.Hour;
+        int currentMin = DateTime.Now.Minute + 1;
+
         return new ScheduleJob[4]{
             new ScheduleJob()
             {
                 Name = "AutoTransferJob",
                 DelayExecutionTimeInSeconds = 1,
                 IsActive = true,
-                DelayExecutionAtExactlyTime = new TimeOnly(5, 12, 57),
+                DelayExecutionAtExactlyTime = new TimeOnly(currentHour, currentMin, 0),
             },
             new ScheduleJob()
             {
                 Name = "AutoTransferRetryJob",
                 DelayExecutionTimeInSeconds = 1,
                 IsActive = true,
-                DelayExecutionAtExactlyTime = new TimeOnly(5, 12, 57),
+                DelayExecutionAtExactlyTime = new TimeOnly(currentHour, currentMin, 0),
             },
             new ScheduleJob()
             {
                 Name = "ResumeTransferJob",
                 DelayExecutionTimeInSeconds = 1,
                 IsActive = true,
-                DelayExecutionAtExactlyTime = new TimeOnly(5, 12, 57),
+                DelayExecutionAtExactlyTime = new TimeOnly(currentHour, currentMin, 0),
             },
             new ScheduleJob()
             {
                 Name = "ResumeTransferRetryJob",
                 DelayExecutionTimeInSeconds = 1,
                 IsActive = true,
-                DelayExecutionAtExactlyTime = new TimeOnly(5, 12, 57),
+                DelayExecutionAtExactlyTime = new TimeOnly(currentHour, currentMin, 0),
             },
         };
     }
