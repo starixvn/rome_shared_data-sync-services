@@ -36,14 +36,13 @@ namespace AutoTransfer.Jobs
                 await WaitingToNextSchedule(stoppingToken);
             }
 
-            await WaitForSystemUM(stoppingToken);
-            await WaitForBalanceUpProcess(stoppingToken);
-            bool isComplete = false;
-
-            while (!isComplete)
+            while (true)
             {
                 try
                 {
+                    await WaitForSystemUM(stoppingToken);
+                    await WaitForBalanceUpProcess(stoppingToken);
+
                     var retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads);
 
                     if (retryInfo.IsCompleted)
@@ -51,20 +50,20 @@ namespace AutoTransfer.Jobs
                         break;
                     }
 
-                    List<Task> threads = new List<Task>();
+                    if (!retryInfo.Batches.Any())
+                    {
+                        await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
+                        continue;
+                    }
+
+                    var threads = new List<Task>();
 
                     foreach (BatchModel batch in retryInfo.Batches)
                     {
                         threads.Add(ProcessBatch(batch));
                     }
 
-                    if (threads.Count == 0)
-                    {
-                        break;
-                    }
-
                     await Task.WhenAll(threads);
-                    await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -80,17 +79,5 @@ namespace AutoTransfer.Jobs
 
         private Task ProcessBatch(BatchModel batch)
             => transferService.ProcessRetryBatch(batch);
-
-        private async Task ImportLogs()
-        {
-            try
-            {
-                await transferService.ImportLogs();
-            }
-            catch (Exception ex)
-            {
-                await HandleException(ex);
-            }
-        }
     }
 }

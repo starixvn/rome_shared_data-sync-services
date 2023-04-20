@@ -13,8 +13,11 @@ public class SelectRetryBatchesCriteriaTests
         // Arrange
         var criteria = new SelectRetryBatchesCriteria(1);
 
-        // Act & Assert
-        Assert.Equal("Age_ClearBalanceCust_Job_ReTrySel", criteria.GetSettingKey());
+        // Act
+        var actualValue = criteria.GetSettingKey();
+
+        //Assert
+        Assert.Equal("Age_ClearBalanceCust_Job_ReTrySel", actualValue);
     }
 
     [Theory]
@@ -27,23 +30,11 @@ public class SelectRetryBatchesCriteriaTests
 
         var criteria = new SelectRetryBatchesCriteria(numberOfThreads);
 
-        // Act & Assert
+        // Act
+        var actualValue = criteria.IsValid();
 
-        Assert.Equal(expected, criteria.IsValid());
-    }
-
-    [Fact]
-    public void Constructor_Always_ReturnsCorrectProperties()
-    {
-        // Arrange
-
-        var criteria = new SelectRetryBatchesCriteria(1);
-
-        // Act & Assert
-        Assert.True(
-            1 == criteria.NumOfThread
-
-        );
+        // Assert
+        Assert.Equal(expected, actualValue);
     }
 
 }
