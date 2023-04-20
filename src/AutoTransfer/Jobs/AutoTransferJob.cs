@@ -50,20 +50,20 @@ namespace AutoTransfer.Jobs
                     await WaitForSystemUM(stoppingToken);
                     await WaitForBalanceUpProcess(stoppingToken);
 
-                    var batches = await transferService.SelectBatches(settings.NumberOfThreads, runningMode);
-                    if (!batches.Any())
+                    var batch = await transferService.SelectBatch(runningMode);
+
+                    if (batch.IsFinished)
                     {
                         break;
                     }
 
-                    var threads = new List<Task>();
-
-                    foreach (BatchModel batch in batches)
+                    if (batch.BatchNo == 0)
                     {
-                        threads.Add(ProcessBatch(batch));
+                        await Task.Delay(settings.DelayExecuteBatchesTime, stoppingToken);
+                        continue;
                     }
 
-                    await Task.WhenAll(threads);
+                    ProcessBatch(batch);
                 }
                 catch (Exception ex)
                 {

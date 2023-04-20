@@ -7,7 +7,7 @@ namespace AutoTransfer.Services;
 public interface ITransferService
 {
     Task<AutoTransferStartModel> Start(int pairOfBatch, string runningMode);
-    Task<IEnumerable<BatchModel>> SelectBatches(int numberOfThreads, string runningMode);
+    Task<BatchModel> SelectBatch(string runningMode);
     Task<ResultModel> ProcessBatch(BatchModel batch);
     Task<RetryBatchesModel> SelectRetryBatches(int numberOfThreads);
     Task<ResultModel> ProcessRetryBatch(BatchModel batch);
@@ -40,11 +40,14 @@ public sealed class TransferService : ITransferService
         };
     }
 
-    public async Task<IEnumerable<BatchModel>> SelectBatches(int numberOfThreads, string runningMode)
+    public async Task<BatchModel> SelectBatch(string runningMode)
     {
-        var criteria = new SelectBatchesCriteria(numberOfThreads, runningMode);
+        var criteria = new SelectBatchCriteria(runningMode);
+        var data = await dynamicRepository.FetchAsync<BatchModel>(criteria);
+        var result = data.Any() ? data.First() : new BatchModel();
+        result.IsFinished = criteria.IsFinished;
 
-        return await dynamicRepository.FetchAsync<BatchModel>(criteria);
+        return result;
     }
 
     public async Task<ResultModel> ProcessBatch(BatchModel batch)

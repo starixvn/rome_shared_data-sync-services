@@ -4,7 +4,7 @@
     <Setting Key="SystemSettings_Select" SpName="SystemSettings_Select" DbName="DBBAH.bodb02.bodbAdminNet" />
    <Setting Key="Acc_CheckProcessingData" SpName="Acc_CheckProcessingData" DbName="DBTXN.bodb02.BODBDownlineNet" />
    <Setting Key="Age_ClearBalanceCust_Job_Start" SpName="Age_ClearBalanceCust_Job_Start" DbName="DBTXN.bodb02.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_BatchSel" SpName="Age_ClearBalanceCust_Job_BatchSel" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_BatchSel_PerfTest" SpName="Age_ClearBalanceCust_Job_BatchSel_PerfTest" DbName="DBTXN.bodb02.BODBDownlineNet" />
     <Setting Key="Age_ClearBalanceCust_Job_BatchProcess" SpName="Age_ClearBalanceCust_Job_BatchProcess" DbName="DBTXN.bodb02.BODBDownlineNet" />
     <Setting Key="Age_ClearBalanceCust_Job_ReTrySel" SpName="Age_ClearBalanceCust_Job_ReTrySel" DbName="DBTXN.bodb02.BODBDownlineNet" />
     

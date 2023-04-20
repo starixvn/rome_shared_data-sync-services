@@ -106,10 +106,10 @@ namespace AutoTransfer.Tests.Jobs
 
             var ci = 0;
             transferService
-                .SelectBatches(settings.Value.NumberOfThreads, RunningModeConstant.Resume)
+                .SelectBatch(RunningModeConstant.Resume)
                 .Returns(c =>
                 {
-                    if (ci == 1)
+                    if (ci == 2)
                     {
                         ci++;
                         throw new Exception();
@@ -118,11 +118,17 @@ namespace AutoTransfer.Tests.Jobs
                     if (ci == 0)
                     {
                         ci++;
-                        return new List<BatchModel> { new BatchModel() };
+                        return new BatchModel { BatchNo = 1 };
+                    }
+
+                    if (ci == 1)
+                    {
+                        ci++;
+                        return new BatchModel { IsFinished = false };
                     }
 
                     ci++;
-                    return new List<BatchModel> { };
+                    return new BatchModel { IsFinished = true };
                 });
 
             // Act

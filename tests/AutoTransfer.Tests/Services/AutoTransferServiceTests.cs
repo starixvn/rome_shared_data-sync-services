@@ -44,16 +44,15 @@ public class AutoTransferServiceTests
     }
 
     [Fact]
-    public async Task SelectBatches_Always_ReturnsCorrectValue()
+    public async Task SelectBatch_Always_ReturnsCorrectValue()
     {
         // Arrange
-        int numOfThread = 5;
         string runningMode = RunningModeConstant.Normal;
-        var expectedModel = new List<BatchModel>();
-        dynamicRepository.FetchAsync<BatchModel>(Arg.Any<SelectBatchesCriteria>()).Returns(expectedModel);
+        var expectedModel = new BatchModel();
+        dynamicRepository.FetchAsync<BatchModel>(Arg.Any<SelectBatchCriteria>()).Returns(new List<BatchModel>());
 
         // Act
-        var actualValue = await transferService.SelectBatches(numOfThread, runningMode);
+        var actualValue = await transferService.SelectBatch(runningMode);
 
         // Assert
         Assert.True(compareLogic.Compare(expectedModel, actualValue).AreEqual);
