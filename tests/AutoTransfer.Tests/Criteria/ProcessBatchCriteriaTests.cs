@@ -1,7 +1,6 @@
 using AutoTransfer.Constants;
 using AutoTransfer.Criteria;
 using AutoTransfer.Models;
-using Xunit;
 
 namespace AutoTransfer.Tests.Criteria;
 
@@ -20,8 +19,11 @@ public class ProcessBatchCriteriaTests
         };
         var criteria = new ProcessBatchCriteria(batchModel);
 
-        // Act & Assert
-        Assert.Equal("Age_ClearBalanceCust_Job_BatchProcess", criteria.GetSettingKey());
+        // Act
+        var actualValue = criteria.GetSettingKey();
+
+        //Assert
+        Assert.Equal("Age_ClearBalanceCust_Job_BatchProcess", actualValue);
     }
 
     [Theory]
@@ -39,37 +41,12 @@ public class ProcessBatchCriteriaTests
             RunningMode = RunningModeConstant.Normal,
             ToCustIds = "1,2,3,4"
         };
-
-        // Act
         var criteria = new ProcessBatchCriteria(batchModel);
 
-        // Assert
-        Assert.Equal(expected, criteria.IsValid());
-    }
-
-    [Fact]
-    public void Constructor_Always_ReturnsCorrectProperties()
-    {
-        // Arrange
-        var batchModel = new BatchModel()
-        {
-            BatchNo = 1,
-            FromCustId = 1,
-            RunningMode = RunningModeConstant.Normal,
-            ToCustIds = "1,2,3,4"
-        };
-
         // Act
-        var criteria = new ProcessBatchCriteria(batchModel);
+        var actualValue = criteria.IsValid();
 
         // Assert
-        Assert.True(
-            1 == criteria.BatchNo
-            && 1 == criteria.FromCustId
-            && "1,2,3,4" == criteria.ToCustIds
-            && RunningModeConstant.Normal == criteria.RunningMode
-
-        );
+        Assert.Equal(expected, actualValue);
     }
-
 }

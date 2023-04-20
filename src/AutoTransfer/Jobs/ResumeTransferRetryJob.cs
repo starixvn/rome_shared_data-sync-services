@@ -29,26 +29,20 @@ namespace AutoTransfer.Jobs
 
         public override async Task ExecuteInternal(CancellationToken stoppingToken)
         {
-            var isRunTime = IsRunTime();
-
-            if (!isRunTime)
-            {
-                await WaitingToNextSchedule(stoppingToken);
-            }
+            await WaitingToSchedule(stoppingToken);
 
             if (stoppingToken.IsCancellationRequested)
             {
                 return;
             }
 
-            await WaitForSystemUM(stoppingToken);
-            await WaitForBalanceUpProcess(stoppingToken);
-            bool isComplete = false;
-
-            while (!isComplete)
+            while (true)
             {
                 try
                 {
+                    await WaitForSystemUM(stoppingToken);
+                    await WaitForBalanceUpProcess(stoppingToken);
+
                     var retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads);
 
                     if (retryInfo.IsCompleted)
@@ -56,20 +50,20 @@ namespace AutoTransfer.Jobs
                         break;
                     }
 
-                    List<Task> threads = new List<Task>();
+                    if (!retryInfo.Batches.Any())
+                    {
+                        await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
+                        continue;
+                    }
+
+                    var threads = new List<Task>();
 
                     foreach (BatchModel batch in retryInfo.Batches)
                     {
                         threads.Add(ProcessBatch(batch));
                     }
 
-                    if (threads.Count == 0)
-                    {
-                        break;
-                    }
-
                     await Task.WhenAll(threads);
-                    await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -83,36 +77,7 @@ namespace AutoTransfer.Jobs
             await StopAsync(stoppingToken);
         }
 
-        public async override Task WaitingToNextSchedule(CancellationToken stoppingToken)
-        {
-            var currentTime = DateTime.Now;
-            var executionTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, scheduleJob.DelayExecutionAtExactlyTime.Value.Hour, scheduleJob.DelayExecutionAtExactlyTime.Value.Minute, 0);
-
-            var todayExecutionTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, executionTime.Hour, executionTime.Minute, 0);
-            if (todayExecutionTime < currentTime)
-            {
-                await StopAsync(stoppingToken);
-                return;
-            }
-
-            var timeDelay = todayExecutionTime - currentTime;
-            loggerService.InfoConsole("{JobInfo} delay to {next}", scheduleJob.JobInfo, timeDelay);
-            await Task.Delay(timeDelay, stoppingToken);
-        }
-
         private Task ProcessBatch(BatchModel batch)
             => transferService.ProcessRetryBatch(batch);
-
-        private async Task ImportLogs()
-        {
-            try
-            {
-                await transferService.ImportLogs();
-            }
-            catch (Exception ex)
-            {
-                await HandleException(ex);
-            }
-        }
     }
 }

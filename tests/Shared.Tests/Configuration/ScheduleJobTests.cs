@@ -50,7 +50,7 @@ public class ScheduleJobTests
         };
 
         // Act & Assert
-        Assert.Equal("IntegrateJob - UAT", job.JobInfo);
+        Assert.Equal("[IntegrateJob - UAT]", job.JobInfo);
     }
 
     [Fact]
@@ -63,6 +63,6 @@ public class ScheduleJobTests
         };
 
         // Act & Assert
-        Assert.Equal("IntegrateJob", job.JobInfo);
+        Assert.Equal("[IntegrateJob]", job.JobInfo);
     }
 }

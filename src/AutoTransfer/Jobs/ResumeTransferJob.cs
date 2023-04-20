@@ -7,97 +7,77 @@ using ONEbook.UM.Services;
 using Shared.Configuration;
 using Shared.Services;
 
-namespace AutoTransfer.Jobs;
-
-public sealed class ResumeTransferJob : BaseAutoTransferJob
+namespace AutoTransfer.Jobs
 {
-    private const string runningMode = RunningModeConstant.Resume;
-
-    public ResumeTransferJob(
-        ScheduleJob[] scheduleJobs,
-        ILoggerService loggerService,
-        IMaintenanceService maintenanceService,
-        UMClientConfiguration umClientConfiguration,
-        ITransferService transferService,
-        IOptions<JobsSettingsModel> settings)
-        : base(
-            scheduleJobs.FirstOrDefault(job => job.Name.Equals(nameof(ResumeTransferJob), StringComparison.OrdinalIgnoreCase)) ?? new ScheduleJob(),
-            loggerService,
-            maintenanceService,
-            umClientConfiguration,
-            transferService,
-            settings)
+    public sealed class ResumeTransferJob : BaseAutoTransferJob
     {
-    }
+        private const string runningMode = RunningModeConstant.Resume;
 
-    public override async Task ExecuteInternal(CancellationToken stoppingToken)
-    {
-        var isRunTime = IsRunTime();
-
-        if (!isRunTime)
+        public ResumeTransferJob(
+            ScheduleJob[] scheduleJobs,
+            ILoggerService loggerService,
+            IMaintenanceService maintenanceService,
+            UMClientConfiguration umClientConfiguration,
+            ITransferService transferService,
+            IOptions<JobsSettingsModel> settings)
+            : base(
+                scheduleJobs.FirstOrDefault(job => job.Name.Equals(nameof(ResumeTransferJob), StringComparison.OrdinalIgnoreCase)) ?? new ScheduleJob(),
+                loggerService,
+                maintenanceService,
+                umClientConfiguration,
+                transferService,
+                settings)
         {
-            await WaitingToNextSchedule(stoppingToken);
         }
 
-        if (stoppingToken.IsCancellationRequested)
+        public override async Task ExecuteInternal(CancellationToken stoppingToken)
         {
-            return;
-        }
+            await WaitingToSchedule(stoppingToken);
 
-        await WaitForSystemUM(stoppingToken);
-        await WaitForBalanceUpProcess(stoppingToken);
-        var startModel = await transferService.Start(settings.PairOfBatch, runningMode);
-
-        var isComplete = startModel.TotalBatch == 0;
-
-        while (!isComplete)
-        {
-            try
+            if (stoppingToken.IsCancellationRequested)
             {
-                var batches = await transferService.SelectBatches(settings.NumberOfThreads, runningMode);
-                var threads = new List<Task>();
-
-                foreach (var batch in batches)
-                {
-                    threads.Add(ProcessBatch(batch));
-                }
-
-                if (threads.Count == 0)
-                {
-                    break;
-                }
-
-                await Task.WhenAll(threads);
-                await Task.Delay(settings.DelayExecuteBatchesTime, stoppingToken);
+                return;
             }
-            catch (Exception ex)
+
+            await WaitForSystemUM(stoppingToken);
+            await WaitForBalanceUpProcess(stoppingToken);
+            var startModel = await transferService.Start(settings.PairOfBatch, runningMode);
+
+            while (startModel.TotalBatch > 0)
             {
-                await HandleException(ex);
-                await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
+                try
+                {
+                    await WaitForSystemUM(stoppingToken);
+                    await WaitForBalanceUpProcess(stoppingToken);
+
+                    var batches = await transferService.SelectBatches(settings.NumberOfThreads, runningMode);
+
+                    if (!batches.Any())
+                    {
+                        break;
+                    }
+
+                    var threads = new List<Task>();
+
+                    foreach (BatchModel batch in batches)
+                    {
+                        threads.Add(ProcessBatch(batch));
+                    }
+
+                    await Task.WhenAll(threads);
+                }
+                catch (Exception ex)
+                {
+                    await HandleException(ex);
+                    await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
+                }
             }
-        }
 
-        loggerService.InfoConsole("{JobInfo} run completed.", scheduleJob.JobInfo);
-        await StopAsync(stoppingToken);
-    }
-
-    public async override Task WaitingToNextSchedule(CancellationToken stoppingToken)
-    {
-        var currentTime = DateTime.Now;
-        var executionTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, scheduleJob.DelayExecutionAtExactlyTime.Value.Hour, scheduleJob.DelayExecutionAtExactlyTime.Value.Minute, 0);
-
-        var todayExecutionTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, executionTime.Hour, executionTime.Minute, 0);
-        if (todayExecutionTime < currentTime)
-        {
+            loggerService.InfoConsole("{JobInfo} run completed.", scheduleJob.JobInfo);
             await StopAsync(stoppingToken);
-            return;
         }
 
-        var timeDelay = todayExecutionTime - currentTime;
-        loggerService.InfoConsole("{JobInfo} delay to {next}", scheduleJob.JobInfo, timeDelay);
-        await Task.Delay(timeDelay, stoppingToken);
+        private Task ProcessBatch(BatchModel batch)
+            => transferService.ProcessBatch(batch);
     }
-
-    private Task ProcessBatch(BatchModel batch)
-        => transferService.ProcessBatch(batch);
 }

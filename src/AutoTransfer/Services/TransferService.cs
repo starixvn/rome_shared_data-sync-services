@@ -11,7 +11,7 @@ public interface ITransferService
     Task<ResultModel> ProcessBatch(BatchModel batch);
     Task<RetryBatchesModel> SelectRetryBatches(int numberOfThreads);
     Task<ResultModel> ProcessRetryBatch(BatchModel batch);
-    Task<ResultModel> ImportLogs();
+    Task<ResultModel> ImportLogs(int historyReplicateNumber);
     Task<DateTime?> CheckBalanceUpProcess();
 }
 
@@ -86,22 +86,41 @@ public sealed class TransferService : ITransferService
         };
     }
 
-    public async Task<ResultModel> ImportLogs()
+    public async Task<ResultModel> ImportLogs(int historyReplicateNumber)
     {
-        var monitorLogsCriteria = new ImportMonitorLogCriteria();
-        var logs = await dynamicRepository.FetchAsync<AutoTransferLogModel>(monitorLogsCriteria);
 
         var messages = new List<string>();
 
-        foreach (var log in logs)
+        try
         {
-            var importHistoryCriteria = new ImportHistoryLogCriteria(log.RowData);
-            await dynamicRepository.ExecuteAsync(importHistoryCriteria);
+            var monitorLogsCriteria = new ImportMonitorLogCriteria();
+            var logs = await dynamicRepository.FetchAsync<AutoTransferLogModel>(monitorLogsCriteria);
 
-            if (importHistoryCriteria.ErrCode != 0)
+            foreach (var log in logs)
             {
-                messages.Add(importHistoryCriteria.ErrMsg);
+                var importHistoryCriteria = new ImportHistoryLogCriteria(log.RowData, 0);
+                await dynamicRepository.ExecuteAsync(importHistoryCriteria);
+
+                if (importHistoryCriteria.ErrCode != 0)
+                {
+                    messages.Add(importHistoryCriteria.ErrMsg);
+                }
+
+                for (var i = 0; i < historyReplicateNumber; i++)
+                {
+                    var replicateCriteria = new ImportHistoryLogCriteria(log.RowData, i + 1);
+                    await dynamicRepository.ExecuteAsync(replicateCriteria);
+
+                    if (replicateCriteria.ErrCode != 0)
+                    {
+                        messages.Add(replicateCriteria.ErrMsg);
+                    }
+                }
             }
+        }
+        catch (Exception e)
+        {
+            messages.Add(e.Message);
         }
 
         return new ResultModel

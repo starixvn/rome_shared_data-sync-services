@@ -13,6 +13,7 @@ public class BaseAutoTransferJob : BackgroundServiceBase
 {
     public readonly JobsSettingsModel settings;
     public readonly ITransferService transferService;
+    private const int UMDelayCheckingTimeInMilliseconds = 60000;
 
     public BaseAutoTransferJob(
         ScheduleJob scheduleJob,
@@ -34,11 +35,6 @@ public class BaseAutoTransferJob : BackgroundServiceBase
 
     public async Task WaitForSystemUM(CancellationToken stoppingToken)
     {
-        if (settings.IgnoreSystemUM)
-        {
-            return;
-        }
-
         while (true)
         {
             var umInfo = await GetUnderMaintenanceTime();
@@ -48,13 +44,7 @@ public class BaseAutoTransferJob : BackgroundServiceBase
                 break;
             }
 
-            await loggerService.Info($"{scheduleJob.JobInfo} is Under Maintenance from {umInfo.From} to {umInfo.To}.");
-
-            var endTime = DateTime.Parse(umInfo.To);
-            var currentTime = DateTime.Now;
-            var timeDelay = endTime - currentTime;
-            loggerService.InfoConsole($"{scheduleJob.JobInfo} delay to {timeDelay}");
-            await Task.Delay(timeDelay, stoppingToken);
+            await Task.Delay(UMDelayCheckingTimeInMilliseconds, stoppingToken);
         }
     }
 
@@ -63,6 +53,7 @@ public class BaseAutoTransferJob : BackgroundServiceBase
         while (true)
         {
             var endTime = await transferService.CheckBalanceUpProcess();
+
             if (endTime == null)
             {
                 break;
@@ -90,14 +81,55 @@ public class BaseAutoTransferJob : BackgroundServiceBase
 
     public async virtual Task WaitingToNextSchedule(CancellationToken stoppingToken)
     {
-        var currentTime = DateTime.Now;
-        var executionTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, scheduleJob.DelayExecutionAtExactlyTime.Value.Hour, scheduleJob.DelayExecutionAtExactlyTime.Value.Minute, 0);
+        var ct = DateTime.Now;
+        var executionTime = scheduleJob.DelayExecutionAtExactlyTime.Value;
+        var todayExecutionTime = new DateTime(ct.Year, ct.Month, ct.Day, executionTime.Hour, executionTime.Minute, 0);
+        var runTime = todayExecutionTime > ct ? todayExecutionTime : todayExecutionTime.AddDays(1);
 
-        var todayExecutionTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, executionTime.Hour, executionTime.Minute, 0);
-        var runTime = todayExecutionTime > currentTime ? todayExecutionTime : todayExecutionTime.AddDays(1);
-        var timeDelay = runTime - currentTime;
+        var timeDelay = runTime - ct;
         loggerService.InfoConsole("{JobInfo} delay to {next}", scheduleJob.JobInfo, timeDelay);
-
         await Task.Delay(timeDelay, stoppingToken);
+    }
+
+    public async virtual Task WaitingToSchedule(CancellationToken stoppingToken)
+    {
+        if (!scheduleJob.DelayExecutionAtExactlyDateTime.HasValue)
+        {
+            await StopAsync(stoppingToken);
+            return;
+        }
+
+        var ct = DateTime.Now;
+        var currentTime = new DateTime(ct.Year, ct.Month, ct.Day, ct.Hour, ct.Minute, 0);
+
+        var executionTime = scheduleJob.DelayExecutionAtExactlyDateTime.Value;
+        var todayExecutionTime = new DateTime(ct.Year, ct.Month, ct.Day, executionTime.Hour, executionTime.Minute, 0);
+
+        if (todayExecutionTime == currentTime)
+        {
+            return;
+        }
+
+        if (todayExecutionTime < currentTime)
+        {
+            await StopAsync(stoppingToken);
+            return;
+        }
+
+        var timeDelay = todayExecutionTime - ct;
+        loggerService.InfoConsole("{JobInfo} delay to {next}", scheduleJob.JobInfo, timeDelay);
+        await Task.Delay(timeDelay, stoppingToken);
+    }
+
+    public async Task ImportLogs()
+    {
+        try
+        {
+            await transferService.ImportLogs(settings.HistoryReplicateNumber);
+        }
+        catch (Exception ex)
+        {
+            await HandleException(ex);
+        }
     }
 }

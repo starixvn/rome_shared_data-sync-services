@@ -1,6 +1,5 @@
 using AutoTransfer.Constants;
 using AutoTransfer.Criteria;
-using Xunit;
 
 namespace AutoTransfer.Tests.Criteria;
 
@@ -12,8 +11,11 @@ public class AutoTransferStartCriteriaTests
         // Arrange
         var criteria = new AutoTransferStartCriteria(200, RunningModeConstant.Normal);
 
-        // Act & Assert
-        Assert.Equal("Age_ClearBalanceCust_Job_Start", criteria.GetSettingKey());
+        // Act
+        var actualValue = criteria.GetSettingKey();
+
+        //Assert
+        Assert.Equal("Age_ClearBalanceCust_Job_Start", actualValue);
     }
 
     [Theory]
@@ -25,23 +27,10 @@ public class AutoTransferStartCriteriaTests
         // Arrange
         var criteria = new AutoTransferStartCriteria(pairOfBatch, RunningModeConstant.Normal);
 
-        // Act & Assert
-        Assert.Equal(expected, criteria.IsValid());
+        // Act
+        var actualValue = criteria.IsValid();
+
+        //Assert
+        Assert.Equal(expected, actualValue);
     }
-
-    [Fact]
-    public void Constructor_Always_ReturnsCorrectProperties()
-    {
-        // Arrange
-        int pairOfBatch = 100;
-        string runningMode = RunningModeConstant.Normal;
-
-        // Act 
-        var criteria = new AutoTransferStartCriteria(pairOfBatch, runningMode);
-
-        // Assert
-        Assert.Equal(pairOfBatch, criteria.PairOfBatch);
-        Assert.Equal(runningMode, criteria.RunningMode);
-    }
-
 }

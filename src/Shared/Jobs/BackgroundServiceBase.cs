@@ -43,13 +43,18 @@ namespace Shared.Jobs
 
         public abstract Task ExecuteInternal(CancellationToken stoppingToken);
 
-        protected Task HandleException(Exception exception)
+        protected async Task HandleException(Exception exception)
         {
-            return exception.Message.Contains("The account is disabled", StringComparison.OrdinalIgnoreCase)
-                ? loggerService.Info($"{scheduleJob.JobInfo}: {exception.Message}")
-                : loggerService.Error(exception, scheduleJob, nameof(ExecuteInternal));
+            if (exception.Message.Contains("The account is disabled", StringComparison.OrdinalIgnoreCase))
+            {
+                loggerService.InfoConsole($"{scheduleJob.JobInfo}: {exception.Message}");
+            }
+            else
+            {
+                await loggerService.Error(exception, scheduleJob, nameof(ExecuteInternal));
+            }
         }
-        
+
         protected async Task<UnderMaintenanceTime> GetUnderMaintenanceTime()
         {
             try

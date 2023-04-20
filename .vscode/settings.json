@@ -1,0 +1,10 @@
+{
+    "omnisharp.enableRoslynAnalyzers": true,
+    "editor.formatOnSave": true,
+    "dotnet-test-explorer.testProjectPath": "**/*Tests.csproj",
+    "coverage-gutters.showGutterCoverage": true,
+    "coverage-gutters.showLineCoverage": true,
+    "coverage-gutters.showRulerCoverage": true,
+    "dotnet-test-explorer.testArguments": "--collect:\"XPlat Code Coverage\"",
+    "dotnet-test-explorer.treeMode": "full",
+}

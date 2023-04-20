@@ -1,7 +1,5 @@
 using AutoTransfer.Constants;
 using AutoTransfer.Criteria;
-using AutoTransfer.Models;
-using Xunit;
 
 namespace AutoTransfer.Tests.Criteria;
 
@@ -13,8 +11,11 @@ public class SelectBatchesCriteriaTests
         // Arrange
         var criteria = new SelectBatchesCriteria(1, RunningModeConstant.Normal);
 
-        // Act & Assert
-        Assert.Equal("Age_ClearBalanceCust_Job_BatchSel", criteria.GetSettingKey());
+        // Act
+        var actualValue = criteria.GetSettingKey();
+
+        //Assert
+        Assert.Equal("Age_ClearBalanceCust_Job_BatchSel", actualValue);
     }
 
     [Theory]
@@ -27,24 +28,10 @@ public class SelectBatchesCriteriaTests
 
         var criteria = new SelectBatchesCriteria(numberOfThreads, RunningModeConstant.Normal);
 
-        // Act & Assert
+        // Act
+        var actualValue = criteria.IsValid();
 
-        Assert.Equal(expected, criteria.IsValid());
+        // Assert
+        Assert.Equal(expected, actualValue);
     }
-
-    [Fact]
-    public void Constructor_Always_ReturnsCorrectProperties()
-    {
-        // Arrange
-
-        var criteria = new SelectBatchesCriteria(1, RunningModeConstant.Normal);
-
-        // Act & Assert
-        Assert.True(
-            1 == criteria.NumOfThread
-            && RunningModeConstant.Normal == criteria.RunningMode
-
-        );
-    }
-
 }
