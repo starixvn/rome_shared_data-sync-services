@@ -43,10 +43,17 @@ public abstract class BackgroundServiceBase : BackgroundService
 
     public abstract Task ExecuteInternal(CancellationToken stoppingToken);
 
-    protected Task HandleException(Exception exception)
-        => exception.Message.Contains("The account is disabled", StringComparison.OrdinalIgnoreCase)
-        ? loggerService.Info($"{scheduleJob.JobInfo}: {exception.Message}")
-        : loggerService.Error(exception, scheduleJob, nameof(ExecuteInternal));
+    protected async Task HandleException(Exception exception)
+    {
+        if (exception.Message.Contains("The account is disabled", StringComparison.OrdinalIgnoreCase))
+        {
+            loggerService.InfoConsole("{JobInfo}: {Message}", scheduleJob.JobInfo, exception.Message);
+        }
+        else
+        {
+            await loggerService.Error(exception, scheduleJob, nameof(ExecuteInternal));
+        }
+    }
 
     protected async Task<UnderMaintenanceTime> GetUnderMaintenanceTime()
     {

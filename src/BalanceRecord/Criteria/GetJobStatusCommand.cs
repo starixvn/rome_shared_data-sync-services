@@ -9,7 +9,7 @@ public sealed class GetJobStatusCommand : NonQueryCommand
 
     public string VName { get; }
 
-    public string VValue { get; set; }
+    public string VValue { get; set; } = default!;
 
     public override string GetSettingKey()
         => "SystemSettings_Select";

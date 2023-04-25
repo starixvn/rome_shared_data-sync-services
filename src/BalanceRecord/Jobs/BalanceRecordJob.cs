@@ -44,14 +44,14 @@ public sealed class BalanceRecordJob : IntervalBackgroundService
     {
         if (await balanceRecordService.IsStopJob(scheduleJob.Name, scheduleJob.IsTest))
         {
-            await loggerService.Info($"{scheduleJob.JobInfo} is set stopped from DB.");
+            loggerService.InfoConsole("{JobInfo} is set stopped from DB.", scheduleJob.JobInfo);
             return false;
         }
 
         var lastRowInserted = await balanceRecordService.GetLastRowInserted(siteDBGroupId, scheduleJob.IsTest);
         if (!lastRowInserted.HasValue)
         {
-            await loggerService.Info($"{scheduleJob.JobInfo}: LastRowInserted is NULL.");
+            loggerService.InfoConsole("{JobInfo}: LastRowInserted is NULL.", scheduleJob.JobInfo);
             return false;
         }
 
