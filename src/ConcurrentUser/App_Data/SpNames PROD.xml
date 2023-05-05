@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Functions>
+  <Function Name="ConcurrentUser">
+    <Setting Key="Age_Rpt_ConcurrentOnlineUserDetail_Sel" SpName="Age_Rpt_ConcurrentOnlineUserDetail_Sel" DbName="DBONUSER.ON_USER.BODBDownlineNet" />
+    <Setting Key="Age_Rpt_ConcurrentOnlineUserDetail_Ins_DBONUSER" SpName="Age_Rpt_ConcurrentOnlineUserDetail_Ins" DbName="DBONUSER.ON_USER.BODBDownlineNet" />
+  </Function>
+</Functions>
