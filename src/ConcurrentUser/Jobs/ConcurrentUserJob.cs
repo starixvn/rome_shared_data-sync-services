@@ -40,29 +40,22 @@ public sealed class ConcurrentUserJob : BackgroundServiceBase
 
     private async Task ExecuteJob()
     {
-        try
+        var users = await service.GetConcurrentUser();
+        foreach (var server in ServerForInsertData)
         {
-            var users = await service.GetConcurrentUser();
-            foreach (var server in ServerForInsertData)
+            try
             {
-                try
-                {
-                    var result = await service.InsertConcurrentUser(users, server);
-                    loggerService.InfoConsole($"Inserted Concurrent users to server({server}) has been {(result.IsOK ? "OK" : "Error!")}");
-                }
-                catch (Exception exception)
-                {
-                    loggerService.Error(exception, scheduleJob, "InsertConcurrentUser");
-                }
+                var result = await service.InsertConcurrentUser(users, server);
+                loggerService.InfoConsole($"Inserted Concurrent users to server({server}) has been {(result.IsOK ? "OK" : "Error!")}");
             }
+            catch (Exception exception)
+            {
+                loggerService.Error(exception, scheduleJob, "InsertConcurrentUser");
+            }
+        }
 
-            loggerService.InfoConsole(
-                $"{scheduleJob.Name} has sleep {scheduleJob.DelayExecutionTimeInSeconds} seconds");
-        }
-        catch (Exception ex)
-        {
-            await HandleException(ex);
-        }
+        loggerService.InfoConsole(
+            $"{scheduleJob.Name} has sleep {scheduleJob.DelayExecutionTimeInSeconds} seconds");
     }
 
     private void AssignParameters(ScheduleJobParameter[] parameters)

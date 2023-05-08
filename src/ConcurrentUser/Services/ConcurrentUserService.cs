@@ -24,7 +24,6 @@ public class ConcurrentUserService : IConcurrentUserService
 
     public async Task<IEnumerable<ConcurrentUserModel>> GetConcurrentUser()
     {
-
         var criteria = new GetConcurrentUserCriteria();
         return await dynamicRepository.FetchAsync<ConcurrentUserModel>(criteria);
     }
