@@ -29,13 +29,20 @@ public sealed class ConcurrentUserJob : BackgroundServiceBase
 
     public override async Task ExecuteInternal(CancellationToken stoppingToken)
     {
-        var umInfo = await GetUnderMaintenanceTime();
-        if (!umInfo.IsUnderMaintenanceTime)
+        try
         {
-            await ExecuteJob();
-        }
+            var umInfo = await GetUnderMaintenanceTime();
+            if (!umInfo.IsUnderMaintenanceTime)
+            {
+                await ExecuteJob();
+            }
 
-        await Task.Delay(scheduleJob.DelayExecutionTimeInSeconds * 1000, stoppingToken);
+            await Task.Delay(scheduleJob.DelayExecutionTimeInSeconds * 1000, stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            await HandleException(ex);
+        }
     }
 
     private async Task ExecuteJob()
@@ -45,17 +52,13 @@ public sealed class ConcurrentUserJob : BackgroundServiceBase
         {
             try
             {
-                var result = await service.InsertConcurrentUser(users, server);
-                loggerService.InfoConsole($"Inserted Concurrent users to server({server}) has been {(result.IsOK ? "OK" : "Error!")}");
+                var result = await service.InsertConcurrentUser(users, server);                
             }
             catch (Exception exception)
             {
                 loggerService.Error(exception, scheduleJob, "InsertConcurrentUser");
             }
         }
-
-        loggerService.InfoConsole(
-            $"{scheduleJob.Name} has sleep {scheduleJob.DelayExecutionTimeInSeconds} seconds");
     }
 
     private void AssignParameters(ScheduleJobParameter[] parameters)
