@@ -1,10 +1,13 @@
 using BalanceRecord.Criteria;
+using Fanex.Caching;
 using Fanex.Data.Repository;
 
 namespace BalanceRecord.Services;
 
 public interface IBalanceRecordService
 {
+    Task<bool> IsStopJobFromCache(string jobName, bool isTest, int cacheInSeconds = 60);
+
     Task<bool> IsStopJob(string jobName, bool isTest);
 
     Task<long?> GetLastRowInserted(short siteDBGroupId, bool isTest);
@@ -24,9 +27,16 @@ public interface IBalanceRecordService
 public sealed class BalanceRecordService : IBalanceRecordService
 {
     private readonly IDynamicRepository dynamicRepository;
+    private readonly ICacheService cacheService;
 
-    public BalanceRecordService(IDynamicRepository dynamicRepository)
-        => this.dynamicRepository = dynamicRepository;
+    public BalanceRecordService(IDynamicRepository dynamicRepository, ICacheService cacheService)
+        => (this.dynamicRepository, this.cacheService) = (dynamicRepository, cacheService);
+
+    public Task<bool> IsStopJobFromCache(string jobName, bool isTest, int cacheInSeconds = 60)
+        => cacheService.GetOrSetAsync(
+            $"BalanceRecord.BT_{jobName}_ServiceStatus{(isTest ? "_UAT" : string.Empty)}",
+            () => IsStopJob(jobName, isTest),
+            new CacheItemOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(cacheInSeconds)));
 
     public async Task<bool> IsStopJob(string jobName, bool isTest)
     {

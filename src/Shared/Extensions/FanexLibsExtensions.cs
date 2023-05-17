@@ -77,4 +77,7 @@ public static class FanexLibsExtensions
 
         return services.AddSingleton<IDynamicRepository, DynamicRepository>();
     }
+
+    public static IServiceCollection AddFanexCachingMemory(this IServiceCollection services)
+        => services.AddSingleton<Fanex.Caching.ICacheService, Fanex.Caching.CacheService>();
 }

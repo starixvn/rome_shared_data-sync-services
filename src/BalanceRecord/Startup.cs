@@ -18,6 +18,7 @@ public sealed class Startup
             .AddONEBookUM(configuration)
             .AddFanexLogging(configuration)
             .AddFanexDataWithSqlServer(configuration)
+            .AddFanexCachingMemory()
             .AddApplicationServices(configuration)
             .AddHealthChecks();
 
