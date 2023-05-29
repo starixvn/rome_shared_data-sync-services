@@ -43,6 +43,36 @@ namespace AutoTransfer.Tests.Jobs
         }
 
         [Fact]
+        public async Task ExecuteInternal_NotRunTime_NotLogCompleted()
+        {
+            // Arrange
+            ScheduleJob scheduleJob = new()
+            {
+                Name = "AutoTransferJob",
+                DelayExecutionTimeInSeconds = 1,
+                IsActive = true,
+            };
+
+            var time = DateTime.Now.AddHours(1);
+            transferService.GetJobConfigModel().Returns(new JobConfigModel
+            {
+                DefaultTime = $"{time.Hour}:{time.Minute}"
+            });
+
+            CancellationTokenSource cts = new();
+            CancellationToken cancellationToken = cts.Token;
+
+            // Act
+            await autoTransferRetryJob.ExecuteInternal(cancellationToken);
+
+            // Assert
+            loggerService.DidNotReceive().InfoConsole(
+               Arg.Is<string>(arg => "{JobInfo} run completed." == arg),
+               Arg.Is<object[]>(arg => scheduleJob.JobInfo == arg[0].ToString())
+           );
+        }
+
+        [Fact]
         public async Task ExecuteInternalRunTimeLogCompleted()
         {
             // Arrange
@@ -51,8 +81,12 @@ namespace AutoTransfer.Tests.Jobs
                 Name = "AutoTransferRetryJob",
                 DelayExecutionTimeInSeconds = 1,
                 IsActive = true,
-                DelayExecutionAtExactlyTime = new TimeOnly(currentHour, currentMin, 0),
             };
+
+            transferService.GetJobConfigModel().Returns(new JobConfigModel
+            {
+                DefaultTime = $"{DateTime.Now.Hour}:{DateTime.Now.Minute}"
+            });
 
             CancellationTokenSource cts = new();
             CancellationToken cancellationToken = cts.Token;

@@ -11,5 +11,6 @@
     <Setting Key="Age_ClearBalanceCust_Job_ProcessExport" SpName="Age_ClearBalanceCust_Job_ProcessExport" DbName="DBTXN.bodb02.BODBDownlineNet" />
     <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport" DbName="DB061.bodb_Archive.BODBDownlineNet" />
     <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport_HA1" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport" DbName="DB062.bodb_Archive.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_ConfigSel" SpName="Age_ClearBalanceCust_Job_ConfigSel" DbName="DBTXN.bodb02.BODBDownlineNet" />
   </Function>
 </Functions>

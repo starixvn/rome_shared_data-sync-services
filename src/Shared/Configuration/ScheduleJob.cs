@@ -8,10 +8,6 @@ public sealed class ScheduleJob
 
     public int DelayExecutionTimeInSeconds { get; init; }
 
-    public TimeOnly? DelayExecutionAtExactlyTime { get; init; } = default!;
-
-    public DateTime? DelayExecutionAtExactlyDateTime { get; set; }
-
     public bool IsActive { get; init; }
 
     public bool IsTest { get; set; }

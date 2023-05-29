@@ -30,7 +30,6 @@ namespace AutoTransfer.Tests.Jobs
             Name = "AutoTransferJob",
             DelayExecutionTimeInSeconds = 1,
             IsActive = true,
-            DelayExecutionAtExactlyTime = new TimeOnly(DateTime.Now.Hour - 1, DateTime.Now.Minute, 0),
         };
 
         private readonly IOptions<JobsSettingsModel> settings;
@@ -89,7 +88,6 @@ namespace AutoTransfer.Tests.Jobs
                 Name = "AutoTransferJob",
                 DelayExecutionTimeInSeconds = 1,
                 IsActive = true,
-                DelayExecutionAtExactlyTime = new TimeOnly(1, 1, 0),
             };
 
             CancellationTokenSource cts = new();
@@ -136,7 +134,6 @@ namespace AutoTransfer.Tests.Jobs
                 Name = "AutoTransferJob",
                 DelayExecutionTimeInSeconds = 1,
                 IsActive = true,
-                DelayExecutionAtExactlyTime = new TimeOnly(1, 1, 0),
             };
 
             CancellationTokenSource cts = new();
@@ -166,48 +163,26 @@ namespace AutoTransfer.Tests.Jobs
         }
 
         [Fact]
-        public void IsRunTime_NotHaveDelayExecutionAtExactlyTime_ReturnsFalse()
+        public void IsRunTime_DifferentHour_ReturnsFalse()
         {
             // Arrange
-            var job = new BaseAutoTransferJob(
-                new ScheduleJob()
-                {
-                    Name = "AutoTransferJob",
-                    DelayExecutionTimeInSeconds = 1,
-                    IsActive = true,
-                    DelayExecutionAtExactlyTime = null,
-                },
-                loggerService,
-                maintenanceService,
-                new UMClientConfiguration { ResultCacheDuration = 60 },
-                transferService, settings);
+            var runTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute).AddHours(1);
 
             // Act
-            var actualValue = job.IsRunTime();
+            var actualValue = autoTransferJob.IsRunTime(runTime, DateTime.Now);
 
             // Assert
             Assert.False(actualValue);
         }
 
         [Fact]
-        public void IsRunTime_NotRunTime_ReturnsFalse()
+        public void IsRunTime_DifferentMinute_ReturnsFalse()
         {
             // Arrange
-            var job = new BaseAutoTransferJob(
-                new ScheduleJob()
-                {
-                    Name = "AutoTransferJob",
-                    DelayExecutionTimeInSeconds = 1,
-                    IsActive = true,
-                    DelayExecutionAtExactlyTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute + 1, 0),
-                },
-                loggerService,
-                maintenanceService,
-                new UMClientConfiguration { ResultCacheDuration = 60 },
-                transferService, settings);
+            var runTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute).AddMinutes(5);
 
             // Act
-            var actualValue = job.IsRunTime();
+            var actualValue = autoTransferJob.IsRunTime(runTime, DateTime.Now);
 
             // Assert
             Assert.False(actualValue);
@@ -217,21 +192,10 @@ namespace AutoTransfer.Tests.Jobs
         public void IsRunTime_RunTime_ReturnsTrue()
         {
             // Arrange
-            var job = new BaseAutoTransferJob(
-                new ScheduleJob()
-                {
-                    Name = "AutoTransferJob",
-                    DelayExecutionTimeInSeconds = 1,
-                    IsActive = true,
-                    DelayExecutionAtExactlyTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute, 0),
-                },
-                loggerService,
-                maintenanceService,
-                new UMClientConfiguration { ResultCacheDuration = 60 },
-                transferService, settings);
+            var runTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute);
 
             // Act
-            var actualValue = job.IsRunTime();
+            var actualValue = autoTransferJob.IsRunTime(runTime, DateTime.Now);
 
             // Assert
             Assert.True(actualValue);

@@ -1,4 +1,3 @@
-using AutoTransfer.Constants;
 using AutoTransfer.Models;
 using AutoTransfer.Services;
 using Microsoft.Extensions.Options;
@@ -11,8 +10,6 @@ namespace AutoTransfer.Jobs
 {
     public sealed class AutoTransferJob : BaseAutoTransferJob
     {
-        private const string runningMode = RunningModeConstant.Normal;
-
         public AutoTransferJob(
             ScheduleJob[] scheduleJobs,
             ILoggerService loggerService,
@@ -32,15 +29,20 @@ namespace AutoTransfer.Jobs
 
         public override async Task ExecuteInternal(CancellationToken stoppingToken)
         {
-            bool isRunTime = IsRunTime();
+            var dt = DateTime.Now;
+            var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
+            var jobConfigModel = await transferService.GetJobConfigModel();
+            var runningTime = jobConfigModel.GetRunningTime(currentTime);
+            var isRunTime = IsRunTime(runningTime, currentTime);
 
             if (!isRunTime)
             {
-                await WaitingToNextSchedule(stoppingToken);
+                return;
             }
 
             await WaitForSystemUM(stoppingToken);
             await WaitForBalanceUpProcess(stoppingToken);
+            var runningMode = jobConfigModel.RunningMode;
             var startModel = await transferService.Start(settings.PairOfBatch, runningMode);
 
             while (startModel.TotalBatch > 0)
@@ -68,12 +70,11 @@ namespace AutoTransfer.Jobs
                 catch (Exception ex)
                 {
                     await HandleException(ex);
-                    await Task.Delay(settings.DelayExecuteBatchesTime, stoppingToken);
+                    await Task.Delay(settings.DelayExecuteBatchesTimeInMilliSeconds, stoppingToken);
                 }
             }
 
             loggerService.InfoConsole("{JobInfo} run completed.", scheduleJob.JobInfo);
-            await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
         }
 
         private Task ProcessBatch(BatchModel batch)

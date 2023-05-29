@@ -10,6 +10,7 @@ namespace AutoTransfer.Jobs
 {
     public sealed class AutoTransferRetryJob : BaseAutoTransferJob
     {
+        private const int delayTimeToRunRetryJob = 5 * 60000;
         public AutoTransferRetryJob(
             ScheduleJob[] scheduleJobs,
             ILoggerService loggerService,
@@ -29,13 +30,18 @@ namespace AutoTransfer.Jobs
 
         public override async Task ExecuteInternal(CancellationToken stoppingToken)
         {
-            var isRunTime = IsRunTime();
+            var dt = DateTime.Now;
+            var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
+            var jobConfigModel = await transferService.GetJobConfigModel();
+            var runningTime = jobConfigModel.GetRunningTime(currentTime);
+            var isRunTime = IsRunTime(runningTime, currentTime);
 
             if (!isRunTime)
             {
-                await WaitingToNextSchedule(stoppingToken);
+                return;
             }
 
+            await Task.Delay(delayTimeToRunRetryJob, stoppingToken);
             while (true)
             {
                 try
@@ -74,7 +80,6 @@ namespace AutoTransfer.Jobs
 
             await ImportLogs();
             loggerService.InfoConsole("{JobInfo} run completed.", scheduleJob.JobInfo);
-            await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
         }
 
         private Task ProcessBatch(BatchModel batch)

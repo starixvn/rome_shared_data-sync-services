@@ -28,6 +28,27 @@ public class BaseAutoTransferJob : BackgroundServiceBase
         this.transferService = transferService;
     }
 
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        if (scheduleJob.IsActive)
+        {
+            await loggerService.Info($"{scheduleJob.JobInfo} is running.");
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await ExecuteInternal(stoppingToken);
+                    await Task.Delay(settings.StartJobCheckingIntervalInMilliSeconds, stoppingToken);
+                }
+                catch (Exception e)
+                {
+                    await HandleException(e);
+                }
+            }
+        }
+    }
+
     public override async Task ExecuteInternal(CancellationToken stoppingToken)
     {
         throw new NotImplementedException();
@@ -53,72 +74,22 @@ public class BaseAutoTransferJob : BackgroundServiceBase
         while (true)
         {
             var endTime = await transferService.CheckBalanceUpProcess();
+            var currentTime = DateTime.Now;
 
-            if (endTime == null)
+            if (endTime == null || endTime <= currentTime)
             {
                 break;
             }
 
-            var currentTime = DateTime.Now;
             var timeDelay = endTime.Value - currentTime;
             loggerService.InfoConsole($"{scheduleJob.JobInfo} delay to {timeDelay}");
             await Task.Delay(timeDelay, stoppingToken);
         }
     }
 
-    public bool IsRunTime()
+    public bool IsRunTime(TimeOnly runningTime, DateTime currentTime)
     {
-        if (!scheduleJob.DelayExecutionAtExactlyTime.HasValue)
-        {
-            return false;
-        }
-
-        var currentTime = DateTime.Now;
-        var scheduleTime = scheduleJob.DelayExecutionAtExactlyTime.Value;
-
-        return currentTime.Hour == scheduleTime.Hour && currentTime.Minute == scheduleTime.Minute;
-    }
-
-    public async virtual Task WaitingToNextSchedule(CancellationToken stoppingToken)
-    {
-        var ct = DateTime.Now;
-        var executionTime = scheduleJob.DelayExecutionAtExactlyTime.Value;
-        var todayExecutionTime = new DateTime(ct.Year, ct.Month, ct.Day, executionTime.Hour, executionTime.Minute, 0);
-        var runTime = todayExecutionTime > ct ? todayExecutionTime : todayExecutionTime.AddDays(1);
-
-        var timeDelay = runTime - ct;
-        loggerService.InfoConsole("{JobInfo} delay to {next}", scheduleJob.JobInfo, timeDelay);
-        await Task.Delay(timeDelay, stoppingToken);
-    }
-
-    public async virtual Task WaitingToSchedule(CancellationToken stoppingToken)
-    {
-        if (!scheduleJob.DelayExecutionAtExactlyDateTime.HasValue)
-        {
-            await StopAsync(stoppingToken);
-            return;
-        }
-
-        var ct = DateTime.Now;
-        var currentTime = new DateTime(ct.Year, ct.Month, ct.Day, ct.Hour, ct.Minute, 0);
-
-        var executionTime = scheduleJob.DelayExecutionAtExactlyDateTime.Value;
-        var todayExecutionTime = new DateTime(ct.Year, ct.Month, ct.Day, executionTime.Hour, executionTime.Minute, 0);
-
-        if (todayExecutionTime == currentTime)
-        {
-            return;
-        }
-
-        if (todayExecutionTime < currentTime)
-        {
-            await StopAsync(stoppingToken);
-            return;
-        }
-
-        var timeDelay = todayExecutionTime - ct;
-        loggerService.InfoConsole("{JobInfo} delay to {next}", scheduleJob.JobInfo, timeDelay);
-        await Task.Delay(timeDelay, stoppingToken);
+        return currentTime.Hour == runningTime.Hour && currentTime.Minute == runningTime.Minute;
     }
 
     public async Task ImportLogs()

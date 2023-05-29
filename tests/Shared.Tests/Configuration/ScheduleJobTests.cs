@@ -18,7 +18,6 @@ public class ScheduleJobTests
                 new ScheduleJobParameter { Key = "Parameter1", Value = "qwerty" }
             },
             DelayExecutionTimeInSeconds = 5,
-            DelayExecutionAtExactlyTime = new TimeOnly(5, 12, 57),
             IsActive = true,
             IsTest = false
         };
@@ -31,9 +30,6 @@ public class ScheduleJobTests
             && "Parameter1" == job.Parameters[1].Key
             && "qwerty" == job.Parameters[1].Value
             && 5 == job.DelayExecutionTimeInSeconds
-            && 5 == job.DelayExecutionAtExactlyTime.Value.Hour
-            && 12 == job.DelayExecutionAtExactlyTime.Value.Minute
-            && 57 == job.DelayExecutionAtExactlyTime.Value.Second
             && job.IsActive
             && !job.IsTest
         );
