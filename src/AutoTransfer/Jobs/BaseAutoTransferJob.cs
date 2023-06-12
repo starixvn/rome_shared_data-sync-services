@@ -69,24 +69,6 @@ public class BaseAutoTransferJob : BackgroundServiceBase
         }
     }
 
-    public async Task WaitForBalanceUpProcess(CancellationToken stoppingToken)
-    {
-        while (true)
-        {
-            var endTime = await transferService.CheckBalanceUpProcess();
-            var currentTime = DateTime.Now;
-
-            if (endTime == null || endTime <= currentTime)
-            {
-                break;
-            }
-
-            var timeDelay = endTime.Value - currentTime;
-            loggerService.InfoConsole($"{scheduleJob.JobInfo} delay to {timeDelay}");
-            await Task.Delay(timeDelay, stoppingToken);
-        }
-    }
-
     public bool IsRunTime(TimeOnly runningTime, DateTime currentTime)
     {
         return currentTime.Hour == runningTime.Hour && currentTime.Minute == runningTime.Minute;

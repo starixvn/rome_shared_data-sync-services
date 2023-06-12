@@ -123,17 +123,6 @@ public class AutoTransferServiceTests
     }
 
     [Fact]
-    public async Task CheckBalanceUpProcess_Always_ReturnsCorrectValue()
-    {
-        // Act
-        var actualValue = await transferService.CheckBalanceUpProcess();
-
-
-        // Assert
-        Assert.Null(actualValue);
-    }
-
-    [Fact]
     public async Task ImportLogs_AllLogSuccess_ReturnsCorrectValue()
     {
         // Arrange 

@@ -12,7 +12,6 @@ public interface ITransferService
     Task<RetryBatchesModel> SelectRetryBatches(int numberOfThreads);
     Task<ResultModel> ProcessRetryBatch(BatchModel batch);
     Task<ResultModel> ImportLogs(int historyReplicateNumber);
-    Task<DateTime?> CheckBalanceUpProcess();
     Task<JobConfigModel> GetJobConfigModel();
 }
 
@@ -129,13 +128,6 @@ public sealed class TransferService : ITransferService
             ErrCode = messages.Any() ? 1 : 0,
             ErrMsg = string.Join("\n\r", messages)
         };
-    }
-
-    public async Task<DateTime?> CheckBalanceUpProcess()
-    {
-        var criteria = new CheckBalanceUpProcessCriteria();
-        await dynamicRepository.ExecuteAsync(criteria);
-        return criteria.EndProcessingTime;
     }
 
     public async Task<JobConfigModel> GetJobConfigModel()

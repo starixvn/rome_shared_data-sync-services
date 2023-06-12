@@ -14,9 +14,6 @@ namespace AutoTransfer.Tests.Jobs
 {
     public class AutoTransferJobTests
     {
-        private readonly int currentHour = DateTime.Now.Hour;
-        private readonly int currentMin = DateTime.Now.Minute;
-
         private readonly ILoggerService loggerService;
         private readonly IMaintenanceService maintenanceService;
         private readonly ITransferService transferService;

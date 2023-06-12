@@ -40,8 +40,9 @@ namespace AutoTransfer.Jobs
                 return;
             }
 
+            await loggerService.Info($"{scheduleJob.JobInfo} start transferring.");
+
             await WaitForSystemUM(stoppingToken);
-            await WaitForBalanceUpProcess(stoppingToken);
             var runningMode = jobConfigModel.RunningMode;
             var startModel = await transferService.Start(settings.PairOfBatch, runningMode);
 
@@ -50,7 +51,6 @@ namespace AutoTransfer.Jobs
                 try
                 {
                     await WaitForSystemUM(stoppingToken);
-                    await WaitForBalanceUpProcess(stoppingToken);
 
                     var batches = await transferService.SelectBatches(settings.NumberOfThreads, runningMode);
                     if (!batches.Any())
@@ -74,7 +74,7 @@ namespace AutoTransfer.Jobs
                 }
             }
 
-            loggerService.InfoConsole("{JobInfo} run completed.", scheduleJob.JobInfo);
+            await loggerService.Info($"{scheduleJob.JobInfo} run completed.");
         }
 
         private Task ProcessBatch(BatchModel batch)

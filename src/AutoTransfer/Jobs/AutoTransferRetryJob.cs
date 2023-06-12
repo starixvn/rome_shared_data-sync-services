@@ -41,13 +41,14 @@ namespace AutoTransfer.Jobs
                 return;
             }
 
+            await loggerService.Info($"{scheduleJob.JobInfo} start transferring.");
             await Task.Delay(delayTimeToRunRetryJob, stoppingToken);
+
             while (true)
             {
                 try
                 {
                     await WaitForSystemUM(stoppingToken);
-                    await WaitForBalanceUpProcess(stoppingToken);
 
                     var retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads);
 
@@ -79,7 +80,7 @@ namespace AutoTransfer.Jobs
             }
 
             await ImportLogs();
-            loggerService.InfoConsole("{JobInfo} run completed.", scheduleJob.JobInfo);
+            await loggerService.Info($"{scheduleJob.JobInfo} run completed.");
         }
 
         private Task ProcessBatch(BatchModel batch)

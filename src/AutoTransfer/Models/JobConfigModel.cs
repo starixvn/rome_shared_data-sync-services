@@ -24,7 +24,10 @@ public class JobConfigModel
         if (ManualTime.HasValue && ManualTime.Value >= currentTime)
         {
             var manualTime = ManualTime.Value;
-            return new TimeOnly(manualTime.Hour, manualTime.Minute);
+            if (manualTime.Year == currentTime.Year && manualTime.Month == currentTime.Month && manualTime.Date == currentTime.Date)
+            {
+                return new TimeOnly(manualTime.Hour, manualTime.Minute);
+            }
         }
 
         if (TimeOnly.TryParse(DefaultTime, out TimeOnly rt))

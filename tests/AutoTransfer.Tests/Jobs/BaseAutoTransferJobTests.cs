@@ -126,43 +126,6 @@ namespace AutoTransfer.Tests.Jobs
         }
 
         [Fact]
-        public async Task WaitForBalanceUpProcess_Always_CheckBalanceUpProcess()
-        {
-            // Arrange
-            ScheduleJob scheduleJob = new()
-            {
-                Name = "AutoTransferJob",
-                DelayExecutionTimeInSeconds = 1,
-                IsActive = true,
-            };
-
-            CancellationTokenSource cts = new();
-            CancellationToken cancellationToken = cts.Token;
-
-            var ci = 0;
-            transferService
-                .CheckBalanceUpProcess()
-                .Returns(x =>
-                {
-                    if (ci == 1)
-                    {
-                        ci++;
-                        return (DateTime?)null;
-                    }
-
-                    var ct = DateTime.Now;
-                    ci++;
-                    return new DateTime(ct.Year, ct.Month, ct.Day, ct.Hour, ct.Minute, ct.Second + 1);
-                });
-
-            // Act
-            await autoTransferJob.WaitForBalanceUpProcess(cancellationToken);
-
-            // Assert
-            loggerService.Received().InfoConsole(Arg.Any<string>());
-        }
-
-        [Fact]
         public void IsRunTime_DifferentHour_ReturnsFalse()
         {
             // Arrange
