@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Fanex.Caching.AspNetCore" Version="2.2.2" />
+    <PackageReference Include="Fanex.Caching.AspNetCore" Version="2.2.3" />
     <PackageReference Include="Fanex.Data.Repository" Version="4.2.2" />
     <PackageReference Include="Fanex.Data.SqlServer" Version="4.2.2" />
     <PackageReference Include="Fanex.Logging.RabbitMQ" Version="1.0.1" />

@@ -14,6 +14,7 @@ public sealed class ScheduleJob
 
     public bool IsTest { get; set; }
 
+    public int SettingStatus { get; set; }
     public string JobInfo
         => $"[{Name}{(IsTest ? " - UAT" : string.Empty)}]";
 }
