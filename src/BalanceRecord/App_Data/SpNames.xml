@@ -8,5 +8,6 @@
   <Function Name="SiteDB">
     <Setting Key="SiteDB_BalanceTrigger_Select_SiteDB01" SpName="SiteDB_BalanceTrigger_Select" DbName="DBSIG.SiteDB01.bodb02.bodbAdminNet" />
     <Setting Key="SiteDB_BalanceTrigger_Select_SiteDB02" SpName="SiteDB_BalanceTrigger_Select" DbName="DBSIG.SiteDB02.bodb02.bodbAdminNet" />
+    <Setting Key="SiteDB_BalanceTrigger_Select_SiteDB03" SpName="SiteDB_BalanceTrigger_Select" DbName="DBSIG.SiteDB03.bodb02.bodbAdminNet" />
   </Function>
 </Functions>
