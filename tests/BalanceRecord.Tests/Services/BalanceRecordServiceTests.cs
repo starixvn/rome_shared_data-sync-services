@@ -1,5 +1,6 @@
 using BalanceRecord.Criteria;
 using BalanceRecord.Services;
+using Fanex.Caching;
 using Fanex.Data.Repository;
 using NSubstitute;
 using Xunit;
@@ -9,12 +10,14 @@ namespace BalanceRecord.Tests.Services;
 public class BalanceRecordServiceTests
 {
     private readonly IDynamicRepository dynamicRepository;
+    private readonly ICacheService cacheService;
     private readonly IBalanceRecordService balanceRecordService;
 
     public BalanceRecordServiceTests()
     {
         dynamicRepository = Substitute.For<IDynamicRepository>();
-        balanceRecordService = new BalanceRecordService(dynamicRepository);
+        cacheService = Substitute.For<ICacheService>();
+        balanceRecordService = new BalanceRecordService(dynamicRepository, cacheService);
     }
 
     [Fact]

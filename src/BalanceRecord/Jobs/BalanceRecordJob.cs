@@ -42,7 +42,7 @@ public sealed class BalanceRecordJob : IntervalBackgroundService
 
     public override async Task<bool> ExecuteJob()
     {
-        if (await balanceRecordService.IsStopJob(scheduleJob.Name, scheduleJob.IsTest))
+        if (await balanceRecordService.IsStopJobFromCache(scheduleJob.Name, scheduleJob.IsTest))
         {
             loggerService.InfoConsole("{JobInfo} is set stopped from DB.", scheduleJob.JobInfo);
             return false;
