@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Functions>
+  <Function Name="Auto Transfer">
+    <Setting Key="Age_ClearBalanceCust_Job_Start" SpName="Age_ClearBalanceCust_Job_Start" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_BatchSel" SpName="Age_ClearBalanceCust_Job_BatchSel" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_BatchProcess" SpName="Age_ClearBalanceCust_Job_BatchProcess" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_ReTrySel" SpName="Age_ClearBalanceCust_Job_ReTrySel" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    
+    <Setting Key="Age_ClearBalanceCust_Job_ProcessExport" SpName="Age_ClearBalanceCust_Job_ProcessExport" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport" DbName="DB061.bodb_Archive.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport_HA1" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport" DbName="DB062.bodb_Archive.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_ConfigSel" SpName="Age_ClearBalanceCust_Job_ConfigSel" DbName="DBTXN.bodb02.BODBDownlineNet" />
+  </Function>
+</Functions>

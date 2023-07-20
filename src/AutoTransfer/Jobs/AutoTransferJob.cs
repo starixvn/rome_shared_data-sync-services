@@ -31,7 +31,23 @@ namespace AutoTransfer.Jobs
         {
             var dt = DateTime.Now;
             var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
-            var jobConfigModel = await transferService.GetJobConfigModel();
+            JobConfigModel jobConfigModel = new JobConfigModel();
+
+            try
+            {
+                jobConfigModel = await transferService.GetJobConfigModel();
+            }
+            catch (Exception e)
+            {
+                await HandleException(e);
+                await StopAsync(stoppingToken);
+            }
+
+            if (!jobConfigModel.IsActive)
+            {
+                return;
+            }
+
             var runningTime = jobConfigModel.GetRunningTime(currentTime);
             var isRunTime = IsRunTime(runningTime, currentTime);
 
@@ -43,7 +59,7 @@ namespace AutoTransfer.Jobs
             await loggerService.Info($"{scheduleJob.JobInfo} start transferring.");
 
             await WaitForSystemUM(stoppingToken);
-            var runningMode = jobConfigModel.RunningMode;
+            var runningMode = jobConfigModel.GetRunningMode(currentTime);
             var startModel = await transferService.Start(settings.PairOfBatch, runningMode);
 
             while (startModel.TotalBatch > 0)

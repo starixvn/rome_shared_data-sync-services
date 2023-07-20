@@ -39,12 +39,13 @@ public class BaseAutoTransferJob : BackgroundServiceBase
                 try
                 {
                     await ExecuteInternal(stoppingToken);
-                    await Task.Delay(settings.StartJobCheckingIntervalInMilliSeconds, stoppingToken);
                 }
                 catch (Exception e)
                 {
                     await HandleException(e);
                 }
+
+                await Task.Delay(settings.StartJobCheckingIntervalInMilliSeconds, stoppingToken);
             }
         }
     }

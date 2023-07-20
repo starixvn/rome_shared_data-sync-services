@@ -9,6 +9,9 @@ public class JobConfigModel
     public string DefaultTime { get; set; } = TransferTime;
     public DateTime? ManualTime { get; set; }
     public string RunningMode { get; set; } = RunningModeConstant.Normal;
+    public DateTime? CompletedTime { get; set; }
+
+    public bool IsActive { get; set; }
 
     public static JobConfigModel CreateDefaultConfig()
     {
@@ -24,18 +27,30 @@ public class JobConfigModel
         if (ManualTime.HasValue && ManualTime.Value >= currentTime)
         {
             var manualTime = ManualTime.Value;
-            if (manualTime.Year == currentTime.Year && manualTime.Month == currentTime.Month && manualTime.Date == currentTime.Date)
+
+            if (IsSameDate(currentTime, manualTime))
             {
                 return new TimeOnly(manualTime.Hour, manualTime.Minute);
             }
         }
 
-        if (TimeOnly.TryParse(DefaultTime, out TimeOnly rt))
+        TimeOnly rt;
+        rt = TimeOnly.TryParse(DefaultTime, out rt) ? rt : TimeOnly.Parse(TransferTime);
+        var todayDefaultTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, rt.Hour, rt.Minute, 0);
+
+        if (todayDefaultTime <= currentTime && !HasCompletedToday(currentTime))
         {
-            return rt;
+            return new TimeOnly(currentTime.Hour, currentTime.Minute);
         }
 
-        rt = TimeOnly.Parse(TransferTime);
         return rt;
     }
+
+    public string GetRunningMode(DateTime currentTime)
+        => HasCompletedToday(currentTime) ? RunningMode : RunningModeConstant.Resume;
+    public bool HasCompletedToday(DateTime currentTime)
+        => CompletedTime.HasValue && currentTime.Date <= CompletedTime.Value.Date;
+
+    private static bool IsSameDate(DateTime da, DateTime db)
+        => da.Year == db.Year && da.Month == db.Month && da.Date == db.Date;
 }

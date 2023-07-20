@@ -10,7 +10,7 @@ namespace AutoTransfer.Jobs
 {
     public sealed class AutoTransferRetryJob : BaseAutoTransferJob
     {
-        private const int delayTimeToRunRetryJob = 5 * 60000;
+        private const int delayTimeToRunRetryJob = 2 * 60000;
         public AutoTransferRetryJob(
             ScheduleJob[] scheduleJobs,
             ILoggerService loggerService,
@@ -32,7 +32,23 @@ namespace AutoTransfer.Jobs
         {
             var dt = DateTime.Now;
             var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
-            var jobConfigModel = await transferService.GetJobConfigModel();
+            JobConfigModel jobConfigModel = new JobConfigModel();
+
+            try
+            {
+                jobConfigModel = await transferService.GetJobConfigModel();
+            }
+            catch (Exception e)
+            {
+                await HandleException(e);
+                await StopAsync(stoppingToken);
+            }
+
+            if (!jobConfigModel.IsActive)
+            {
+                return;
+            }
+
             var runningTime = jobConfigModel.GetRunningTime(currentTime);
             var isRunTime = IsRunTime(runningTime, currentTime);
 
@@ -41,41 +57,46 @@ namespace AutoTransfer.Jobs
                 return;
             }
 
-            await loggerService.Info($"{scheduleJob.JobInfo} start transferring.");
             await Task.Delay(delayTimeToRunRetryJob, stoppingToken);
 
-            while (true)
+            jobConfigModel = await transferService.GetJobConfigModel();
+            await loggerService.Info($"{scheduleJob.JobInfo} start transferring.");
+
+            if (!jobConfigModel.HasCompletedToday(DateTime.Now))
             {
-                try
+                while (true)
                 {
-                    await WaitForSystemUM(stoppingToken);
-
-                    var retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads);
-
-                    if (retryInfo.IsCompleted)
+                    try
                     {
-                        break;
+                        await WaitForSystemUM(stoppingToken);
+
+                        var retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads);
+
+                        if (retryInfo.IsCompleted)
+                        {
+                            break;
+                        }
+
+                        if (!retryInfo.Batches.Any())
+                        {
+                            await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
+                            continue;
+                        }
+
+                        var threads = new List<Task>();
+
+                        foreach (BatchModel batch in retryInfo.Batches)
+                        {
+                            threads.Add(ProcessBatch(batch));
+                        }
+
+                        await Task.WhenAll(threads);
                     }
-
-                    if (!retryInfo.Batches.Any())
+                    catch (Exception ex)
                     {
+                        await HandleException(ex);
                         await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
-                        continue;
                     }
-
-                    var threads = new List<Task>();
-
-                    foreach (BatchModel batch in retryInfo.Batches)
-                    {
-                        threads.Add(ProcessBatch(batch));
-                    }
-
-                    await Task.WhenAll(threads);
-                }
-                catch (Exception ex)
-                {
-                    await HandleException(ex);
-                    await Task.Delay(settings.DelayRetryJobTimeInMilliSeconds, stoppingToken);
                 }
             }
 
