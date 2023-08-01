@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Functions>  
+  <Function Name="Winloss Limit 3rd Game">
+    <Setting Key="Acc_SiteDBConfigSel" SpName="Acc_SiteDBConfigSel" DbName="DBCUST.CustDb.bodbAdminNet" />
+    <Setting Key="Task_Chatbot_CustWinLossReachLimitIns" SpName="Task_Chatbot_CustWinLossReachLimitIns" DbName="DBCUST.CustDb.bodbAdminNet" />
+  </Function>
+</Functions>
