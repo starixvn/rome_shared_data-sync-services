@@ -6,73 +6,74 @@ using ONEbook.UM.Services;
 using Shared.Configuration;
 using Shared.Services;
 
-namespace Shared.Jobs;
-
-[ExcludeFromCodeCoverage]
-public abstract class BackgroundServiceBase : BackgroundService
+namespace Shared.Jobs
 {
-    protected readonly ScheduleJob scheduleJob;
-    protected readonly ILoggerService loggerService;
-    private readonly IMaintenanceService maintenanceService;
-    protected readonly int umDelayTimeInSeconds;
-
-    protected BackgroundServiceBase(
-        ScheduleJob scheduleJob,
-        ILoggerService loggerService,
-        IMaintenanceService maintenanceService,
-        UMClientConfiguration umClientConfiguration)
+    [ExcludeFromCodeCoverage]
+    public abstract class BackgroundServiceBase : BackgroundService
     {
-        this.scheduleJob = scheduleJob;
-        this.loggerService = loggerService;
-        this.maintenanceService = maintenanceService;
-        umDelayTimeInSeconds = umClientConfiguration.ResultCacheDuration;
-    }
+        protected readonly ScheduleJob scheduleJob;
+        protected readonly ILoggerService loggerService;
+        private readonly IMaintenanceService maintenanceService;
+        protected readonly int umDelayTimeInSeconds;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        if (scheduleJob.IsActive)
+        protected BackgroundServiceBase(
+            ScheduleJob scheduleJob,
+            ILoggerService loggerService,
+            IMaintenanceService maintenanceService,
+            UMClientConfiguration umClientConfiguration)
         {
-            await loggerService.Info($"{scheduleJob.JobInfo} is running.");
+            this.scheduleJob = scheduleJob;
+            this.loggerService = loggerService;
+            this.maintenanceService = maintenanceService;
+            umDelayTimeInSeconds = umClientConfiguration.ResultCacheDuration;
+        }
 
-            while (!stoppingToken.IsCancellationRequested)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            if (scheduleJob.IsActive)
             {
-                await ExecuteInternal(stoppingToken);
+                await loggerService.Info($"{scheduleJob.JobInfo} is running.");
+
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    await ExecuteInternal(stoppingToken);
+                }
             }
         }
-    }
 
-    public abstract Task ExecuteInternal(CancellationToken stoppingToken);
+        public abstract Task ExecuteInternal(CancellationToken stoppingToken);
 
-    protected async Task HandleException(Exception exception)
-    {
-        if (exception.Message.Contains("The account is disabled", StringComparison.OrdinalIgnoreCase))
+        protected async Task HandleException(Exception exception)
         {
-            loggerService.InfoConsole("{JobInfo}: {Message}", scheduleJob.JobInfo, exception.Message);
-        }
-        else
-        {
-            await loggerService.Error(exception, scheduleJob, nameof(ExecuteInternal));
-        }
-    }
-
-    protected async Task<UnderMaintenanceTime> GetUnderMaintenanceTime()
-    {
-        try
-        {
-            return await maintenanceService.GetUnderMaintenanceTimeAsync();
-        }
-        catch (Exception ex)
-        {
-            await loggerService.Error(ex, scheduleJob, nameof(GetUnderMaintenanceTime), "Could not get UM information.");
+            if (exception.Message.Contains("The account is disabled", StringComparison.OrdinalIgnoreCase))
+            {
+                loggerService.InfoConsole($"{scheduleJob.JobInfo}: {exception.Message}");
+            }
+            else
+            {
+                await loggerService.Error(exception, scheduleJob, nameof(ExecuteInternal));
+            }
         }
 
-        return new UnderMaintenanceTime();
-    }
+        protected async Task<UnderMaintenanceTime> GetUnderMaintenanceTime()
+        {
+            try
+            {
+                return await maintenanceService.GetUnderMaintenanceTimeAsync();
+            }
+            catch (Exception ex)
+            {
+                await loggerService.Error(ex, scheduleJob, nameof(GetUnderMaintenanceTime), "Could not get UM information.");
+            }
 
-    public override async Task StopAsync(CancellationToken cancellationToken)
-    {
-        await loggerService.Info($"{scheduleJob.JobInfo} is stopping.");
+            return new UnderMaintenanceTime();
+        }
 
-        await base.StopAsync(cancellationToken);
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            await loggerService.Info($"{scheduleJob.JobInfo} is stopping.");
+
+            await base.StopAsync(cancellationToken);
+        }
     }
 }

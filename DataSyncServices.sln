@@ -1,29 +1,30 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DEC5059B-AB35-451E-97A3-DB1F892E6055}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "src\Shared\Shared.csproj", "{7EE69B3F-622E-4548-9B6B-29CA5AD820B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "src\Shared\Shared.csproj", "{7EE69B3F-622E-4548-9B6B-29CA5AD820B8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BalanceRecord", "src\BalanceRecord\BalanceRecord.csproj", "{F3A8C5BB-3F27-4BE0-AE54-2734C9764277}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalanceRecord", "src\BalanceRecord\BalanceRecord.csproj", "{F3A8C5BB-3F27-4BE0-AE54-2734C9764277}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C2650251-25EE-4C44-AB03-47FD893D2CAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Tests", "tests\Shared.Tests\Shared.Tests.csproj", "{197AD167-C210-4A55-94B4-30519B4EA073}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Tests", "tests\Shared.Tests\Shared.Tests.csproj", "{197AD167-C210-4A55-94B4-30519B4EA073}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BalanceRecord.Tests", "tests\BalanceRecord.Tests\BalanceRecord.Tests.csproj", "{6F0DDEF0-CCBD-482E-A416-5CDECA7D4D11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalanceRecord.Tests", "tests\BalanceRecord.Tests\BalanceRecord.Tests.csproj", "{6F0DDEF0-CCBD-482E-A416-5CDECA7D4D11}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoTransfer", "src\AutoTransfer\AutoTransfer.csproj", "{565ED6E6-82C8-4079-BECF-B1A397B817F4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoTransfer.Tests", "tests\AutoTransfer.Tests\AutoTransfer.Tests.csproj", "{E379EBF3-33E2-487E-B35A-B882601BB00F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcurrentUser", "src\ConcurrentUser\ConcurrentUser.csproj", "{BD1EB389-2951-4519-841E-1DB5D0DBED1A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoTransfer", "src\AutoTransfer\AutoTransfer.csproj", "{565ED6E6-82C8-4079-BECF-B1A397B817F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{7EE69B3F-622E-4548-9B6B-29CA5AD820B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -46,6 +47,17 @@ Global
 		{BD1EB389-2951-4519-841E-1DB5D0DBED1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD1EB389-2951-4519-841E-1DB5D0DBED1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD1EB389-2951-4519-841E-1DB5D0DBED1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{565ED6E6-82C8-4079-BECF-B1A397B817F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{565ED6E6-82C8-4079-BECF-B1A397B817F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{565ED6E6-82C8-4079-BECF-B1A397B817F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{565ED6E6-82C8-4079-BECF-B1A397B817F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E379EBF3-33E2-487E-B35A-B882601BB00F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E379EBF3-33E2-487E-B35A-B882601BB00F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E379EBF3-33E2-487E-B35A-B882601BB00F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E379EBF3-33E2-487E-B35A-B882601BB00F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7EE69B3F-622E-4548-9B6B-29CA5AD820B8} = {DEC5059B-AB35-451E-97A3-DB1F892E6055}
@@ -53,5 +65,10 @@ Global
 		{197AD167-C210-4A55-94B4-30519B4EA073} = {C2650251-25EE-4C44-AB03-47FD893D2CAE}
 		{6F0DDEF0-CCBD-482E-A416-5CDECA7D4D11} = {C2650251-25EE-4C44-AB03-47FD893D2CAE}
 		{BD1EB389-2951-4519-841E-1DB5D0DBED1A} = {DEC5059B-AB35-451E-97A3-DB1F892E6055}
+		{565ED6E6-82C8-4079-BECF-B1A397B817F4} = {DEC5059B-AB35-451E-97A3-DB1F892E6055}
+		{E379EBF3-33E2-487E-B35A-B882601BB00F} = {C2650251-25EE-4C44-AB03-47FD893D2CAE}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6C6F98E0-241B-4E07-B501-237127693EE7}
 	EndGlobalSection
 EndGlobal
