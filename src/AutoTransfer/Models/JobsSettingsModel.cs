@@ -9,4 +9,5 @@ public class JobsSettingsModel
     public int HistoryReplicateNumber { get; set; }
 
     public int StartJobCheckingIntervalInMilliSeconds { get; set; }
+    public string[] SiteDBs { get; set; }
 }

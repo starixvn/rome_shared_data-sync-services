@@ -24,7 +24,9 @@ public static class ServiceCollectionExtensions
         return services
             .AddSingleton(scheduleJobs)
             .AddSingleton<ITransferService, TransferService>()
+            .AddSingleton<ITransferNotificationsService, TransferNotificationsService>()
             .AddHostedService<AutoTransferJob>()
-            .AddHostedService<AutoTransferRetryJob>();
+            .AddHostedService<AutoTransferRetryJob>()
+            .AddHostedService<AutoTransferNotificationsJob>();
     }
 }
