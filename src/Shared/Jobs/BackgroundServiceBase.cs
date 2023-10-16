@@ -32,7 +32,7 @@ namespace Shared.Jobs
         {
             if (scheduleJob.IsActive)
             {
-                await loggerService.Info($"{scheduleJob.JobInfo} is running.");
+                await loggerService.Error(new Exception($"{scheduleJob.JobInfo} is running."), scheduleJob, nameof(ExecuteAsync));
 
                 while (!stoppingToken.IsCancellationRequested)
                 {

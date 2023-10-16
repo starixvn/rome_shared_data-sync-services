@@ -50,7 +50,7 @@ namespace AutoTransfer.Jobs
             await Task.Delay(delayTimeToRunRetryJob, stoppingToken);
 
             jobConfigModel = await transferService.GetJobConfigModel();
-            await loggerService.Info($"{scheduleJob.JobInfo} start transferring.");
+            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
 
             if (!jobConfigModel.HasCompletedToday(DateTime.Now))
             {
@@ -91,7 +91,7 @@ namespace AutoTransfer.Jobs
             }
 
             await ImportLogs();
-            await loggerService.Info($"{scheduleJob.JobInfo} run completed.");
+            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} run completed."), scheduleJob, nameof(ExecuteInternal));
         }
 
         private Task ProcessBatch(BatchModel batch)
