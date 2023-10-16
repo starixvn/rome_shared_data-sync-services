@@ -31,17 +31,7 @@ namespace AutoTransfer.Jobs
         {
             var dt = DateTime.Now;
             var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
-            JobConfigModel jobConfigModel = new JobConfigModel();
-
-            try
-            {
-                jobConfigModel = await transferService.GetJobConfigModel();
-            }
-            catch (Exception e)
-            {
-                await HandleException(e);
-                await StopAsync(stoppingToken);
-            }
+            var jobConfigModel = await transferService.GetJobConfigModel();
 
             if (!jobConfigModel.IsActive)
             {

@@ -71,9 +71,12 @@ namespace Shared.Jobs
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            await loggerService.Info($"{scheduleJob.JobInfo} is stopping.");
+            if (scheduleJob.IsActive)
+            {
+                await loggerService.Error(new Exception($"{scheduleJob.JobInfo} is stopping."), scheduleJob, nameof(StopAsync));
 
-            await base.StopAsync(cancellationToken);
+                await base.StopAsync(cancellationToken);
+            }
         }
     }
 }
