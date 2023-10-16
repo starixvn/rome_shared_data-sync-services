@@ -15,6 +15,8 @@ public interface ILoggerService
     Task Error(Exception exception, ScheduleJob scheduleJob, string methodName, string message = "");
 
     void InfoConsole(string message, params object[] args);
+
+    Task Notify(string message, string category);
 }
 
 [ExcludeFromCodeCoverage]
@@ -88,4 +90,12 @@ public sealed class LoggerService : ILoggerService
 
     public void InfoConsole(string message, params object[] args)
         => loggerConsole.LogInformation(message, args);
+
+    public async Task Notify(string message, string category)
+    {
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            await logger.ErrorAsync(message, category);
+        }
+    }
 }

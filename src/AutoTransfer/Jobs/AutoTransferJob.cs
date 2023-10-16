@@ -47,6 +47,7 @@ namespace AutoTransfer.Jobs
             }
 
             await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
+            await Notify("start transferring.");
 
             await WaitForSystemUM(stoppingToken);
             var runningMode = jobConfigModel.GetRunningMode(currentTime);
@@ -80,7 +81,8 @@ namespace AutoTransfer.Jobs
                 }
             }
 
-            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} run completed."), scheduleJob, nameof(ExecuteInternal));
+            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} completed transferring."), scheduleJob, nameof(ExecuteInternal));
+            await Notify("completed transferring.");
         }
 
         private Task ProcessBatch(BatchModel batch)

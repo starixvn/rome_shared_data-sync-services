@@ -51,6 +51,7 @@ namespace AutoTransfer.Jobs
 
             jobConfigModel = await transferService.GetJobConfigModel();
             await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
+            await Notify("start transferring.");
 
             if (!jobConfigModel.HasCompletedToday(DateTime.Now))
             {
@@ -91,7 +92,8 @@ namespace AutoTransfer.Jobs
             }
 
             await ImportLogs();
-            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} run completed."), scheduleJob, nameof(ExecuteInternal));
+            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} completed transferring."), scheduleJob, nameof(ExecuteInternal));
+            await Notify("completed transferring.");
         }
 
         private Task ProcessBatch(BatchModel batch)

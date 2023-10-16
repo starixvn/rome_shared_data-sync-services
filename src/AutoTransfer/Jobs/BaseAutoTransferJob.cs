@@ -86,4 +86,13 @@ public class BaseAutoTransferJob : BackgroundServiceBase
             await HandleException(ex);
         }
     }
+
+    protected Task Notify(string message)
+    {
+        var siteDBName = string.IsNullOrWhiteSpace(settings.SiteDBName)
+            ? string.Empty
+            : $" - [{settings.SiteDBName}]";
+
+        return loggerService.Notify($"{scheduleJob.JobInfo}{siteDBName} {message}", settings.NotifyCategory);
+    }
 }
