@@ -7,6 +7,8 @@ public class JobsSettingsModel
     public int DelayExecuteBatchesTimeInMilliSeconds { get; set; }
     public int DelayRetryJobTimeInMilliSeconds { get; set; }
     public int HistoryReplicateNumber { get; set; }
+    public string NotifyCategory { get; set; }
+    public string SiteDBName { get; set; }
 
     public int StartJobCheckingIntervalInMilliSeconds { get; set; }
     public string[] SiteDBs { get; set; }

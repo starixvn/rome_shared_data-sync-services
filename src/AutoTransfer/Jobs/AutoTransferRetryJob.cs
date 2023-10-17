@@ -32,17 +32,7 @@ namespace AutoTransfer.Jobs
         {
             var dt = DateTime.Now;
             var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
-            JobConfigModel jobConfigModel = new JobConfigModel();
-
-            try
-            {
-                jobConfigModel = await transferService.GetJobConfigModel();
-            }
-            catch (Exception e)
-            {
-                await HandleException(e);
-                await StopAsync(stoppingToken);
-            }
+            var jobConfigModel = await transferService.GetJobConfigModel();
 
             if (!jobConfigModel.IsActive)
             {
@@ -60,7 +50,8 @@ namespace AutoTransfer.Jobs
             await Task.Delay(delayTimeToRunRetryJob, stoppingToken);
 
             jobConfigModel = await transferService.GetJobConfigModel();
-            await loggerService.Info($"{scheduleJob.JobInfo} start transferring.");
+            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
+            await Notify("start transferring.");
 
             if (!jobConfigModel.HasCompletedToday(DateTime.Now))
             {
@@ -101,7 +92,8 @@ namespace AutoTransfer.Jobs
             }
 
             await ImportLogs();
-            await loggerService.Info($"{scheduleJob.JobInfo} run completed.");
+            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} completed transferring."), scheduleJob, nameof(ExecuteInternal));
+            await Notify("completed transferring.");
         }
 
         private Task ProcessBatch(BatchModel batch)

@@ -32,7 +32,7 @@ public class BaseAutoTransferJob : BackgroundServiceBase
     {
         if (scheduleJob.IsActive)
         {
-            await loggerService.Info($"{scheduleJob.JobInfo} is running.");
+            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} is running."), scheduleJob, nameof(ExecuteAsync));
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -85,5 +85,14 @@ public class BaseAutoTransferJob : BackgroundServiceBase
         {
             await HandleException(ex);
         }
+    }
+
+    protected Task Notify(string message)
+    {
+        var siteDBName = string.IsNullOrWhiteSpace(settings.SiteDBName)
+            ? string.Empty
+            : $" - [{settings.SiteDBName}]";
+
+        return loggerService.Notify($"{scheduleJob.JobInfo}{siteDBName} {message}", settings.NotifyCategory);
     }
 }
