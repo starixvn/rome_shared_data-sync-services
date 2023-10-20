@@ -37,7 +37,7 @@ public class AutoTransferServiceTests
         };
 
         // Act
-        var actualValue = await transferService.Start(pairOfBatch, runningMode);
+        var actualValue = await transferService.Start(pairOfBatch, runningMode, string.Empty);
 
         // Assert
         Assert.True(compareLogic.Compare(expectedModel, actualValue).AreEqual);
@@ -53,7 +53,7 @@ public class AutoTransferServiceTests
         dynamicRepository.FetchAsync<BatchModel>(Arg.Any<SelectBatchesCriteria>()).Returns(expectedModel);
 
         // Act
-        var actualValue = await transferService.SelectBatches(numOfThread, runningMode);
+        var actualValue = await transferService.SelectBatches(numOfThread, runningMode, string.Empty);
 
         // Assert
         Assert.True(compareLogic.Compare(expectedModel, actualValue).AreEqual);
@@ -74,7 +74,7 @@ public class AutoTransferServiceTests
         var expectedModel = new ResultModel();
 
         // Act
-        var actualValue = await transferService.ProcessBatch(batchModel);
+        var actualValue = await transferService.ProcessBatch(batchModel, string.Empty);
 
         // Assert
         Assert.True(compareLogic.Compare(expectedModel, actualValue).AreEqual);
@@ -94,7 +94,7 @@ public class AutoTransferServiceTests
         };
 
         // Act
-        var actualValue = await transferService.SelectRetryBatches(numberOfThreads);
+        var actualValue = await transferService.SelectRetryBatches(numberOfThreads, string.Empty);
 
         // Assert
         Assert.True(compareLogic.Compare(expectedModel, actualValue).AreEqual);
@@ -115,7 +115,7 @@ public class AutoTransferServiceTests
         var expectedModel = new ResultModel();
 
         // Act
-        var actualValue = await transferService.ProcessRetryBatch(batchModel);
+        var actualValue = await transferService.ProcessRetryBatch(batchModel, string.Empty);
 
 
         // Assert
@@ -139,7 +139,7 @@ public class AutoTransferServiceTests
         };
 
         // Act
-        var actualValue = await transferService.ImportLogs(1);
+        var actualValue = await transferService.ImportLogs(string.Empty);
 
         // Assert
         Assert.True(compareLogic.Compare(expectedModel, actualValue).AreEqual);
@@ -170,11 +170,11 @@ public class AutoTransferServiceTests
         var expectedModel = new ResultModel
         {
             ErrCode = 1,
-            ErrMsg = "Error 1\n\rError 1\n\rError 1\n\rError 1"
+            ErrMsg = "Error 1\n\rError 1"
         };
 
         // Act
-        var actualValue = transferService.ImportLogs(1).GetAwaiter().GetResult();
+        var actualValue = transferService.ImportLogs(string.Empty).GetAwaiter().GetResult();
 
         // Assert
         Assert.True(compareLogic.Compare(expectedModel, actualValue).AreEqual);

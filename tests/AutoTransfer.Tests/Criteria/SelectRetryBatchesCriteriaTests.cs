@@ -11,7 +11,7 @@ public class SelectRetryBatchesCriteriaTests
     public void GetSettingKey_Always_ReturnsValidSettingKey()
     {
         // Arrange
-        var criteria = new SelectRetryBatchesCriteria(1);
+        var criteria = new SelectRetryBatchesCriteria(1, string.Empty);
 
         // Act
         var actualValue = criteria.GetSettingKey();
@@ -28,7 +28,7 @@ public class SelectRetryBatchesCriteriaTests
     {
         // Arrange
 
-        var criteria = new SelectRetryBatchesCriteria(numberOfThreads);
+        var criteria = new SelectRetryBatchesCriteria(numberOfThreads, string.Empty);
 
         // Act
         var actualValue = criteria.IsValid();

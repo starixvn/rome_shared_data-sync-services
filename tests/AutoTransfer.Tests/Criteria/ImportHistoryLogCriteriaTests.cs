@@ -4,19 +4,17 @@ namespace AutoTransfer.Tests.Criteria;
 
 public class ImportHistoryLogCriteriaTests
 {
-    [Theory]
-    [InlineData(0, "Age_ClearBalanceCust_Job_ProcessHistoryImport")]
-    [InlineData(1, "Age_ClearBalanceCust_Job_ProcessHistoryImport_HA1")]
-    public void GetSettingKey_Always_ReturnsValidSettingKey(int replicateNo, string expectedValue)
+    [Fact]
+    public void GetSettingKey_Always_ReturnsValidSettingKey()
     {
         // Arrange
-        var criteria = new ImportHistoryLogCriteria("", replicateNo);
+        var criteria = new ImportHistoryLogCriteria("");
 
         // Act
         var actualValue = criteria.GetSettingKey();
 
         //Assert
-        Assert.Equal(expectedValue, actualValue);
+        Assert.Equal("Age_ClearBalanceCust_Job_ProcessHistoryImport", actualValue);
     }
 
     [Theory]
@@ -27,7 +25,7 @@ public class ImportHistoryLogCriteriaTests
     public void IsValid_Always_ReturnsCorrectValue(string rowData, bool expectedValue)
     {
         // Arrange
-        var criteria = new ImportHistoryLogCriteria(rowData, 0);
+        var criteria = new ImportHistoryLogCriteria(rowData);
 
         // Act
         var actualValue = criteria.IsValid();

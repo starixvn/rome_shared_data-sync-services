@@ -10,7 +10,7 @@ namespace AutoTransfer.Jobs
 {
     public sealed class AutoTransferRetryJob : BaseAutoTransferJob
     {
-        private const int delayTimeToRunRetryJob = 2 * 60000;
+        private const int delayTimeToRunRetryJob = 29000;
         public AutoTransferRetryJob(
             ScheduleJob[] scheduleJobs,
             ILoggerService loggerService,
@@ -32,7 +32,7 @@ namespace AutoTransfer.Jobs
         {
             var dt = DateTime.Now;
             var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
-            var jobConfigModel = await transferService.GetJobConfigModel();
+            var jobConfigModel = await transferService.GetJobConfigModel(settings.Environment);
 
             if (!jobConfigModel.IsActive)
             {
@@ -49,9 +49,8 @@ namespace AutoTransfer.Jobs
 
             await Task.Delay(delayTimeToRunRetryJob, stoppingToken);
 
-            jobConfigModel = await transferService.GetJobConfigModel();
+            jobConfigModel = await transferService.GetJobConfigModel(settings.Environment);
             await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
-            await Notify("start transferring.");
 
             if (!jobConfigModel.HasCompletedToday(DateTime.Now))
             {
@@ -61,7 +60,7 @@ namespace AutoTransfer.Jobs
                     {
                         await WaitForSystemUM(stoppingToken);
 
-                        var retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads);
+                        var retryInfo = await transferService.SelectRetryBatches(settings.NumberOfThreads, settings.Environment);
 
                         if (retryInfo.IsCompleted)
                         {
@@ -97,6 +96,6 @@ namespace AutoTransfer.Jobs
         }
 
         private Task ProcessBatch(BatchModel batch)
-            => transferService.ProcessRetryBatch(batch);
+            => transferService.ProcessRetryBatch(batch, settings.Environment);
     }
 }

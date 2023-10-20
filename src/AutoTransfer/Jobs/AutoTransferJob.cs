@@ -31,7 +31,7 @@ namespace AutoTransfer.Jobs
         {
             var dt = DateTime.Now;
             var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
-            var jobConfigModel = await transferService.GetJobConfigModel();
+            var jobConfigModel = await transferService.GetJobConfigModel(settings.Environment);
 
             if (!jobConfigModel.IsActive)
             {
@@ -46,12 +46,16 @@ namespace AutoTransfer.Jobs
                 return;
             }
 
-            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
-            await Notify("start transferring.");
-
             await WaitForSystemUM(stoppingToken);
             var runningMode = jobConfigModel.GetRunningMode(currentTime);
-            var startModel = await transferService.Start(settings.PairOfBatch, runningMode);
+            var startModel = await transferService.Start(settings.PairOfBatch, runningMode, settings.Environment);
+
+            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
+            var notifyStatus = await transferService.GetNotifyStatusModel();
+            if (notifyStatus == null || notifyStatus.StartTime_Notify == NotifyStatusModel.NotYetSendNotification)
+            {
+                await transferService.UpdateNotifyStatus();
+            }
 
             while (startModel.TotalBatch > 0)
             {
@@ -59,7 +63,7 @@ namespace AutoTransfer.Jobs
                 {
                     await WaitForSystemUM(stoppingToken);
 
-                    var batches = await transferService.SelectBatches(settings.NumberOfThreads, runningMode);
+                    var batches = await transferService.SelectBatches(settings.NumberOfThreads, runningMode, settings.Environment);
                     if (!batches.Any())
                     {
                         break;
@@ -82,10 +86,9 @@ namespace AutoTransfer.Jobs
             }
 
             await loggerService.Error(new Exception($"{scheduleJob.JobInfo} completed transferring."), scheduleJob, nameof(ExecuteInternal));
-            await Notify("completed transferring.");
         }
 
         private Task ProcessBatch(BatchModel batch)
-            => transferService.ProcessBatch(batch);
+            => transferService.ProcessBatch(batch, settings.Environment);
     }
 }

@@ -8,7 +8,7 @@ public class ImportMonitorLogCriteriaTests
     public void GetSettingKey_Always_ReturnsValidSettingKey()
     {
         // Arrange
-        var criteria = new ImportMonitorLogCriteria();
+        var criteria = new ImportMonitorLogCriteria(string.Empty);
 
         // Act
         var actualValue = criteria.GetSettingKey();
@@ -21,7 +21,7 @@ public class ImportMonitorLogCriteriaTests
     public void IsValid_Always_ReturnsTrue()
     {
         // Arrange
-        var criteria = new ImportMonitorLogCriteria();
+        var criteria = new ImportMonitorLogCriteria(string.Empty);
 
         // Act
         var actualValue = criteria.IsValid();

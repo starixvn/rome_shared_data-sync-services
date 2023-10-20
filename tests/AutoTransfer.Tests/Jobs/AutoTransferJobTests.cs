@@ -52,7 +52,7 @@ namespace AutoTransfer.Tests.Jobs
             };
 
             var time = DateTime.Now.AddHours(1);
-            transferService.GetJobConfigModel().Returns(new JobConfigModel
+            transferService.GetJobConfigModel(Arg.Any<string>()).Returns(new JobConfigModel
             {
                 DefaultTime = $"{time.Hour}:{time.Minute}"
             });
@@ -64,10 +64,10 @@ namespace AutoTransfer.Tests.Jobs
             await autoTransferJob.ExecuteInternal(cancellationToken);
 
             // Assert
-            loggerService.DidNotReceive().InfoConsole(
-               Arg.Is<string>(arg => "{JobInfo} run completed." == arg),
-               Arg.Is<object[]>(arg => scheduleJob.JobInfo == arg[0].ToString())
-           );
+            _ = loggerService.DidNotReceive().Error(
+                Arg.Is<Exception>(e => e.Message == "[AutoTransferJob] completed transferring."),
+                Arg.Any<ScheduleJob>(),
+                Arg.Any<string>());
         }
 
         [Fact]
@@ -81,9 +81,10 @@ namespace AutoTransfer.Tests.Jobs
                 IsActive = true,
             };
 
-            transferService.GetJobConfigModel().Returns(new JobConfigModel
+            transferService.GetJobConfigModel(Arg.Any<string>()).Returns(new JobConfigModel
             {
-                DefaultTime = $"{DateTime.Now.Hour}:{DateTime.Now.Minute}"
+                DefaultTime = $"{DateTime.Now.Hour}:{DateTime.Now.Minute}",
+                IsActive = true
             });
 
             CancellationTokenSource cts = new();
@@ -95,7 +96,7 @@ namespace AutoTransfer.Tests.Jobs
             }));
 
             transferService
-                .Start(settings.Value.PairOfBatch, RunningModeConstant.Normal)
+                .Start(settings.Value.PairOfBatch, RunningModeConstant.Resume, Arg.Any<string>())
                 .Returns(Task.FromResult(new AutoTransferStartModel()
                 {
                     TotalBatch = 0,
@@ -105,10 +106,10 @@ namespace AutoTransfer.Tests.Jobs
             await autoTransferJob.ExecuteInternal(cancellationToken);
 
             // Assert
-            loggerService.Received().InfoConsole(
-               Arg.Is<string>(arg => "{JobInfo} run completed." == arg),
-               Arg.Is<object[]>(arg => scheduleJob.JobInfo == arg[0].ToString())
-           );
+            _ = loggerService.Received().Error(
+                Arg.Is<Exception>(e => e.Message == "[AutoTransferJob] completed transferring."),
+                Arg.Any<ScheduleJob>(),
+                Arg.Any<string>());
         }
 
         [Fact]
@@ -122,9 +123,10 @@ namespace AutoTransfer.Tests.Jobs
                 IsActive = true,
             };
 
-            transferService.GetJobConfigModel().Returns(new JobConfigModel
+            transferService.GetJobConfigModel(Arg.Any<string>()).Returns(new JobConfigModel
             {
-                DefaultTime = $"{DateTime.Now.Hour}:{DateTime.Now.Minute}"
+                DefaultTime = $"{DateTime.Now.Hour}:{DateTime.Now.Minute}",
+                IsActive = true
             });
 
             CancellationTokenSource cts = new();
@@ -136,7 +138,7 @@ namespace AutoTransfer.Tests.Jobs
             }));
 
             transferService
-                .Start(settings.Value.PairOfBatch, RunningModeConstant.Normal)
+                .Start(settings.Value.PairOfBatch, RunningModeConstant.Resume, Arg.Any<string>())
                 .Returns(Task.FromResult(new AutoTransferStartModel()
                 {
                     TotalBatch = 1,
@@ -144,7 +146,7 @@ namespace AutoTransfer.Tests.Jobs
 
             var ci = 0;
             transferService
-                .SelectBatches(settings.Value.NumberOfThreads, RunningModeConstant.Normal)
+                .SelectBatches(settings.Value.NumberOfThreads, RunningModeConstant.Normal, Arg.Any<string>())
                 .Returns(c =>
                 {
                     if (ci == 1)
@@ -167,10 +169,10 @@ namespace AutoTransfer.Tests.Jobs
             await autoTransferJob.ExecuteInternal(cancellationToken);
 
             // Assert
-            loggerService.Received().InfoConsole(
-               Arg.Is<string>(arg => "{JobInfo} run completed." == arg),
-               Arg.Is<object[]>(arg => scheduleJob.JobInfo == arg[0].ToString())
-           );
+            _ = loggerService.Received().Error(
+                Arg.Is<Exception>(e => e.Message == "[AutoTransferJob] completed transferring."),
+                Arg.Any<ScheduleJob>(),
+                Arg.Any<string>());
         }
     }
 }

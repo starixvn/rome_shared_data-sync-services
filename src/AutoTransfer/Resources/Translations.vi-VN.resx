@@ -118,15 +118,15 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="FailedNotification" xml:space="preserve">
-    <value>Auto Transfer failed for {0} customer(s): {1}. Details can be found in Auto Transfer Monitor function.</value>
+    <value>Chuyển Khoản Tự Động không thành công cho {0} tài khoản: {1}. Vui lòng xem chi tiết tại chức năng Theo Dõi Chuyển Khoản Tự Động.</value>
     <comment/>
   </data>
   <data name="ToastFailedNotification" xml:space="preserve">
-    <value>Auto Transfer failed for {0} customer(s). Click {1} to view details.</value>
+    <value>Chuyển Khoản Tự Động không thành công cho {0} tài khoản. Nhấn vào {1} để xem chi tiết.</value>
     <comment/>
   </data>
   <data name="ToastFailedNotificationTitle" xml:space="preserve">
-    <value>Auto Transfer Failed</value>
+    <value>Chuyển Khoản Tự Động Không Thành Công</value>
     <comment/>
   </data>
 </root>

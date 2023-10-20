@@ -4,10 +4,11 @@ namespace AutoTransfer.Criteria;
 
 public class AutoTransferStartCriteria : NonQueryCommand
 {
-    public AutoTransferStartCriteria(int pairOfBatch, string runningMode)
+    public AutoTransferStartCriteria(int pairOfBatch, string runningMode, string env)
     {
         PairOfBatch = pairOfBatch;
         RunningMode = runningMode;
+        Environment = env;
     }
 
     public int PairOfBatch { get; set; }
@@ -15,6 +16,8 @@ public class AutoTransferStartCriteria : NonQueryCommand
     public int TotalBatch { get; set; }
     public int TotalSuper { get; set; }
     public string RunningMode { get; set; }
+    public string Environment { get; set; }
+
     public int ErrCode { get; set; }
     public string ErrMsg { get; set; }
 
