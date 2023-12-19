@@ -17,7 +17,7 @@ public class ProcessBatchCriteriaTests
             RunningMode = RunningModeConstant.Normal,
             ToCustIds = "1,2,3,4"
         };
-        var criteria = new ProcessBatchCriteria(batchModel);
+        var criteria = new ProcessBatchCriteria(batchModel, string.Empty);
 
         // Act
         var actualValue = criteria.GetSettingKey();
@@ -41,7 +41,7 @@ public class ProcessBatchCriteriaTests
             RunningMode = RunningModeConstant.Normal,
             ToCustIds = "1,2,3,4"
         };
-        var criteria = new ProcessBatchCriteria(batchModel);
+        var criteria = new ProcessBatchCriteria(batchModel, string.Empty);
 
         // Act
         var actualValue = criteria.IsValid();

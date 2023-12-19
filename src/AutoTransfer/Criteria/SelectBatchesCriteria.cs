@@ -4,14 +4,17 @@ namespace AutoTransfer.Criteria;
 
 public class SelectBatchesCriteria : CriteriaBase
 {
-    public SelectBatchesCriteria(int numberOfThreads, string runningMode)
+    public SelectBatchesCriteria(int numberOfThreads, string runningMode, string env)
     {
         NumOfThread = numberOfThreads;
         RunningMode = runningMode;
+        Environment = env;
     }
 
     public int NumOfThread { get; set; }
     public string RunningMode { get; set; }
+    public string Environment { get; set; }
+
     public int ErrCode { get; set; }
     public string ErrMsg { get; set; }
 

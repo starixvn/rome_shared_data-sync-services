@@ -4,12 +4,15 @@ namespace AutoTransfer.Criteria;
 
 public class SelectRetryBatchesCriteria : CriteriaBase
 {
-    public SelectRetryBatchesCriteria(int numberOfThreads)
+    public SelectRetryBatchesCriteria(int numberOfThreads, string env)
     {
         NumOfThread = numberOfThreads;
+        Environment = env;
     }
 
     public int NumOfThread { get; set; }
+    public string Environment { get; set; }
+
     public int ErrCode { get; set; }
     public string ErrMsg { get; set; }
     public bool IsCompleted { get; set; }

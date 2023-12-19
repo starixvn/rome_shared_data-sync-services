@@ -51,7 +51,7 @@ namespace AutoTransfer.Tests.Jobs
             };
 
             var time = DateTime.Now.AddHours(1);
-            transferService.GetJobConfigModel().Returns(new JobConfigModel
+            transferService.GetJobConfigModel(Arg.Any<string>()).Returns(new JobConfigModel
             {
                 DefaultTime = $"{time.Hour}:{time.Minute}"
             });
@@ -80,9 +80,10 @@ namespace AutoTransfer.Tests.Jobs
                 IsActive = true,
             };
 
-            transferService.GetJobConfigModel().Returns(new JobConfigModel
+            transferService.GetJobConfigModel(Arg.Any<string>()).Returns(new JobConfigModel
             {
-                DefaultTime = $"{DateTime.Now.Hour}:{DateTime.Now.Minute}"
+                DefaultTime = $"{DateTime.Now.Hour}:{DateTime.Now.Minute}",
+                IsActive = true
             });
 
             CancellationTokenSource cts = new();
@@ -95,7 +96,7 @@ namespace AutoTransfer.Tests.Jobs
 
             int ci = 0;
             transferService
-                .SelectRetryBatches(settings.Value.NumberOfThreads)
+                .SelectRetryBatches(settings.Value.NumberOfThreads, Arg.Any<string>())
                 .Returns(c =>
                 {
                     if (ci == 1)
@@ -117,7 +118,7 @@ namespace AutoTransfer.Tests.Jobs
 
 
             int ii = 0;
-            transferService.When(x => x.ImportLogs(Arg.Any<int>()))
+            transferService.When(x => x.ImportLogs(string.Empty))
                 .Do(x =>
                 {
                     ii++;
@@ -131,10 +132,10 @@ namespace AutoTransfer.Tests.Jobs
             await autoTransferRetryJob.ExecuteInternal(cancellationToken);
 
             // Assert
-            loggerService.Received().InfoConsole(
-               Arg.Is<string>(arg => "{JobInfo} run completed." == arg),
-               Arg.Is<object[]>(arg => scheduleJob.JobInfo == arg[0].ToString())
-           );
+            _ = loggerService.Received().Error(
+                Arg.Is<Exception>(e => e.Message == "[AutoTransferRetryJob] completed transferring."),
+                Arg.Any<ScheduleJob>(),
+                Arg.Any<string>());
         }
     }
 }

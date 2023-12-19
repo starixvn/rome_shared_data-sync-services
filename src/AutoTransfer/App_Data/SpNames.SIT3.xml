@@ -8,7 +8,8 @@
     
     <Setting Key="Age_ClearBalanceCust_Job_ProcessExport" SpName="Age_ClearBalanceCust_Job_ProcessExport" DbName="DBTXN.bodb02.BODBDownlineNet" />
     <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport" DbName="DB054.bodb_CustomerLog.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport_HA1" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport" DbName="DB055.bodb_CustomerLog.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_ConfigSel" SpName="Age_ClearBalanceCust_Job_ConfigSel" DbName="DBTXN.bodb02.BODBDownlineNet" />
+     <Setting Key="Age_ClearBalanceCust_Job_ConfigSel" SpName="Age_ClearBalanceCust_Job_ConfigSel" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_NotifySel" SpName="Age_ClearBalanceCust_Job_NotifySel" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_NotifyUpd" SpName="Age_ClearBalanceCust_Job_NotifyUpd" DbName="DBTXN.bodb02.BODBDownlineNet" />
   </Function>
 </Functions>

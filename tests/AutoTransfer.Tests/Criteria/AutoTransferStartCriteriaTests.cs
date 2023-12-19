@@ -9,7 +9,7 @@ public class AutoTransferStartCriteriaTests
     public void GetSettingKey_Always_ReturnsValidSettingKey()
     {
         // Arrange
-        var criteria = new AutoTransferStartCriteria(200, RunningModeConstant.Normal);
+        var criteria = new AutoTransferStartCriteria(200, RunningModeConstant.Normal, "");
 
         // Act
         var actualValue = criteria.GetSettingKey();
@@ -25,7 +25,7 @@ public class AutoTransferStartCriteriaTests
     public void IsValid_AutoTransferStartCriteria_ReturnsCorrectExpected(int pairOfBatch, bool expected)
     {
         // Arrange
-        var criteria = new AutoTransferStartCriteria(pairOfBatch, RunningModeConstant.Normal);
+        var criteria = new AutoTransferStartCriteria(pairOfBatch, RunningModeConstant.Normal, "");
 
         // Act
         var actualValue = criteria.IsValid();

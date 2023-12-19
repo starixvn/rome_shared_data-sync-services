@@ -6,13 +6,15 @@ namespace AutoTransfer.Services;
 
 public interface ITransferService
 {
-    Task<AutoTransferStartModel> Start(int pairOfBatch, string runningMode);
-    Task<IEnumerable<BatchModel>> SelectBatches(int numberOfThreads, string runningMode);
-    Task<ResultModel> ProcessBatch(BatchModel batch);
-    Task<RetryBatchesModel> SelectRetryBatches(int numberOfThreads);
-    Task<ResultModel> ProcessRetryBatch(BatchModel batch);
-    Task<ResultModel> ImportLogs(int historyReplicateNumber);
-    Task<JobConfigModel> GetJobConfigModel();
+    Task<AutoTransferStartModel> Start(int pairOfBatch, string runningMode, string env);
+    Task<IEnumerable<BatchModel>> SelectBatches(int numberOfThreads, string runningMode, string env);
+    Task<ResultModel> ProcessBatch(BatchModel batch, string env);
+    Task<RetryBatchesModel> SelectRetryBatches(int numberOfThreads, string env);
+    Task<ResultModel> ProcessRetryBatch(BatchModel batch, string env);
+    Task<ResultModel> ImportLogs(string env);
+    Task<JobConfigModel> GetJobConfigModel(string env);
+    Task<NotifyStatusModel?> GetNotifyStatusModel();
+    Task<ResultModel> UpdateNotifyStatus();
 }
 
 public sealed class TransferService : ITransferService
@@ -23,9 +25,9 @@ public sealed class TransferService : ITransferService
         => this.dynamicRepository = dynamicRepository;
 
 
-    public async Task<AutoTransferStartModel> Start(int pairOfBatch, string runningMode)
+    public async Task<AutoTransferStartModel> Start(int pairOfBatch, string runningMode, string env)
     {
-        var criteria = new AutoTransferStartCriteria(pairOfBatch, runningMode);
+        var criteria = new AutoTransferStartCriteria(pairOfBatch, runningMode, env);
 
         await dynamicRepository.ExecuteAsync(criteria);
 
@@ -40,16 +42,16 @@ public sealed class TransferService : ITransferService
         };
     }
 
-    public async Task<IEnumerable<BatchModel>> SelectBatches(int numberOfThreads, string runningMode)
+    public async Task<IEnumerable<BatchModel>> SelectBatches(int numberOfThreads, string runningMode, string env)
     {
-        var criteria = new SelectBatchesCriteria(numberOfThreads, runningMode);
+        var criteria = new SelectBatchesCriteria(numberOfThreads, runningMode, env);
 
         return await dynamicRepository.FetchAsync<BatchModel>(criteria);
     }
 
-    public async Task<ResultModel> ProcessBatch(BatchModel batch)
+    public async Task<ResultModel> ProcessBatch(BatchModel batch, string env)
     {
-        var criteria = new ProcessBatchCriteria(batch);
+        var criteria = new ProcessBatchCriteria(batch, env);
 
         await dynamicRepository.ExecuteAsync(criteria);
 
@@ -60,9 +62,9 @@ public sealed class TransferService : ITransferService
         };
     }
 
-    public async Task<RetryBatchesModel> SelectRetryBatches(int numberOfThreads)
+    public async Task<RetryBatchesModel> SelectRetryBatches(int numberOfThreads, string env)
     {
-        var criteria = new SelectRetryBatchesCriteria(numberOfThreads);
+        var criteria = new SelectRetryBatchesCriteria(numberOfThreads, env);
 
         var batches = await dynamicRepository.FetchAsync<BatchModel>(criteria);
 
@@ -73,9 +75,9 @@ public sealed class TransferService : ITransferService
         };
     }
 
-    public async Task<ResultModel> ProcessRetryBatch(BatchModel batch)
+    public async Task<ResultModel> ProcessRetryBatch(BatchModel batch, string env)
     {
-        var criteria = new ProcessBatchCriteria(batch);
+        var criteria = new ProcessBatchCriteria(batch, env);
 
         await dynamicRepository.ExecuteAsync(criteria);
 
@@ -86,35 +88,24 @@ public sealed class TransferService : ITransferService
         };
     }
 
-    public async Task<ResultModel> ImportLogs(int historyReplicateNumber)
+    public async Task<ResultModel> ImportLogs(string env)
     {
 
         var messages = new List<string>();
 
         try
         {
-            var monitorLogsCriteria = new ImportMonitorLogCriteria();
+            var monitorLogsCriteria = new ImportMonitorLogCriteria(env);
             var logs = await dynamicRepository.FetchAsync<AutoTransferLogModel>(monitorLogsCriteria);
 
             foreach (var log in logs)
             {
-                var importHistoryCriteria = new ImportHistoryLogCriteria(log.RowData, 0);
+                var importHistoryCriteria = new ImportHistoryLogCriteria(log.RowData);
                 await dynamicRepository.ExecuteAsync(importHistoryCriteria);
 
                 if (importHistoryCriteria.ErrCode != 0)
                 {
                     messages.Add(importHistoryCriteria.ErrMsg);
-                }
-
-                for (var i = 0; i < historyReplicateNumber; i++)
-                {
-                    var replicateCriteria = new ImportHistoryLogCriteria(log.RowData, i + 1);
-                    await dynamicRepository.ExecuteAsync(replicateCriteria);
-
-                    if (replicateCriteria.ErrCode != 0)
-                    {
-                        messages.Add(replicateCriteria.ErrMsg);
-                    }
                 }
             }
         }
@@ -130,11 +121,31 @@ public sealed class TransferService : ITransferService
         };
     }
 
-    public async Task<JobConfigModel> GetJobConfigModel()
+    public async Task<JobConfigModel> GetJobConfigModel(string env)
     {
-        var criteria = new GetJobConfigCriteria();
+        var criteria = new GetJobConfigCriteria(env);
         var data = await dynamicRepository.FetchAsync<JobConfigModel>(criteria);
 
         return data?.FirstOrDefault() ?? JobConfigModel.CreateDefaultConfig();
+    }
+
+    public async Task<NotifyStatusModel?> GetNotifyStatusModel()
+    {
+        var criteria = new GetNotifyStatusCriteria();
+        var data = await dynamicRepository.FetchAsync<NotifyStatusModel>(criteria);
+
+        return data?.FirstOrDefault();
+    }
+
+    public async Task<ResultModel> UpdateNotifyStatus()
+    {
+        var criteria = new UpdateNotifyStatusCriteria();
+        await dynamicRepository.ExecuteAsync(criteria);
+
+        return new ResultModel
+        {
+            ErrCode = criteria.ErrCode,
+            ErrMsg = criteria.ErrMsg
+        };
     }
 }

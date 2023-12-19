@@ -9,7 +9,7 @@ public class SelectBatchesCriteriaTests
     public void GetSettingKey_Always_ReturnsValidSettingKey()
     {
         // Arrange
-        var criteria = new SelectBatchesCriteria(1, RunningModeConstant.Normal);
+        var criteria = new SelectBatchesCriteria(1, RunningModeConstant.Normal, string.Empty);
 
         // Act
         var actualValue = criteria.GetSettingKey();
@@ -26,7 +26,7 @@ public class SelectBatchesCriteriaTests
     {
         // Arrange
 
-        var criteria = new SelectBatchesCriteria(numberOfThreads, RunningModeConstant.Normal);
+        var criteria = new SelectBatchesCriteria(numberOfThreads, RunningModeConstant.Normal, string.Empty);
 
         // Act
         var actualValue = criteria.IsValid();

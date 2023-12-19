@@ -5,18 +5,21 @@ namespace AutoTransfer.Criteria;
 
 public class ProcessBatchCriteria : NonQueryCommand
 {
-    public ProcessBatchCriteria(BatchModel batch)
+    public ProcessBatchCriteria(BatchModel batch, string env)
     {
         BatchNo = batch.BatchNo;
         FromCustId = batch.FromCustId;
         ToCustIds = batch.ToCustIds;
         RunningMode = batch.RunningMode;
+        Environment = env;
     }
 
     public int BatchNo { get; set; }
     public int FromCustId { get; set; }
     public string ToCustIds { get; set; }
     public string RunningMode { get; set; }
+    public string Environment { get; set; }
+
     public int ErrCode { get; set; }
     public string ErrMsg { get; set; }
 

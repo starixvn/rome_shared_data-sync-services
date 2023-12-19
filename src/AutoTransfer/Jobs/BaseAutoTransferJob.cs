@@ -79,7 +79,7 @@ public class BaseAutoTransferJob : BackgroundServiceBase
     {
         try
         {
-            await transferService.ImportLogs(settings.HistoryReplicateNumber);
+            await transferService.ImportLogs(settings.Environment);
         }
         catch (Exception ex)
         {
