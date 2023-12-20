@@ -52,8 +52,10 @@ namespace AutoTransfer.Jobs
 
             await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
             var notifyStatus = await transferService.GetNotifyStatusModel();
-            if (notifyStatus == null || notifyStatus.StartTime_Notify == NotifyStatusModel.NotYetSendNotification)
+            if (notifyStatus == null ||
+                notifyStatus.StartTime_Notify == NotifyStatusModel.NotYetSendNotification)
             {
+                await Notify("start transferring.");
                 await transferService.UpdateNotifyStatus();
             }
 
