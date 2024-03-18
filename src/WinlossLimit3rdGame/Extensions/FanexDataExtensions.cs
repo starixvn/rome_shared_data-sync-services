@@ -26,7 +26,7 @@ public static class FanexDataExtensions
     public static IServiceCollection CustomizeFanexDataWithSqlServer(this IServiceCollection services, IConfiguration configuration)
     {
         var xml = new XmlDocument();
-        xml.Load("App_Data/SiteDB.bodb02.bodbAdminNet.xml");
+        xml.Load("App_Data/SiteDB.bodb02.wsv_nap.xml");
         var node = xml.ChildNodes[0];
         node.RemoveAll();
         var passConnection = configuration.GetValue<string>("PasswordDB");
@@ -52,12 +52,12 @@ public static class FanexDataExtensions
         siteDBs.ToList().ForEach(siteDB =>
         {
             NewDBSetting(xml, node, siteDB.LinkedServerName, configuration.GetValue<string>("SpNameOnSiteDB"));
-            var key = $"{siteDB.LinkedServerName}.bodb02.bodbAdminNet";
-            var value = $"Data Source={siteDB.AGIP};Persist Security Info=True;User ID=bodbAdminNet;Initial Catalog=bodb02;Password={passConnection}";
+            var key = $"{siteDB.LinkedServerName}.bodb02.wsv_nap";
+            var value = $"Data Source={siteDB.AGIP};Persist Security Info=True;User ID=wsv_nap;Initial Catalog=bodb02;Password={passConnection}";
             connections.Add(key, new ConnectionConfiguration(key, value));
         });
 
-        xml.Save("App_Data/SiteDB.bodb02.bodbAdminNet.xml");
+        xml.Save("App_Data/SiteDB.bodb02.wsv_nap.xml");
 
         DbSettingProviderManager
          .StartNewSession()
@@ -74,7 +74,7 @@ public static class FanexDataExtensions
         var newNode = xml.CreateElement("Setting");
         newNode.SetAttribute("Key", key);
         newNode.SetAttribute("SpName", spName);
-        newNode.SetAttribute("DbName", $"{db}.bodb02.bodbAdminNet");
+        newNode.SetAttribute("DbName", $"{db}.bodb02.wsv_nap");
         newNode.SetAttribute("Timeout", "0");
         node.AppendChild(newNode);
     }
