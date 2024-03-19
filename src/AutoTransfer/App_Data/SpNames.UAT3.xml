@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Functions>
   <Function Name="Auto Transfer">
-    <Setting Key="Age_ClearBalanceCust_Job_Start" SpName="Age_ClearBalanceCust_Job_Start" DbName="DBTXN.bodb02.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_BatchSel" SpName="Age_ClearBalanceCust_Job_BatchSel" DbName="DBTXN.bodb02.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_BatchProcess" SpName="Age_ClearBalanceCust_Job_BatchProcess" DbName="DBTXN.bodb02.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_ReTrySel" SpName="Age_ClearBalanceCust_Job_ReTrySel" DbName="DBTXN.bodb02.BODBDownlineNet" />
-    
-    <Setting Key="Age_ClearBalanceCust_Job_ProcessExport" SpName="Age_ClearBalanceCust_Job_ProcessExport" DbName="DBTXN.bodb02.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport" DbName="DB054.bodb_CustomerLog.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_ConfigSel" SpName="Age_ClearBalanceCust_Job_ConfigSel" DbName="DBTXN.bodb02.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_NotifySel" SpName="Age_ClearBalanceCust_Job_NotifySel" DbName="DBTXN.bodb02.BODBDownlineNet" />
-    <Setting Key="Age_ClearBalanceCust_Job_NotifyUpd" SpName="Age_ClearBalanceCust_Job_NotifyUpd" DbName="DBTXN.bodb02.BODBDownlineNet" />
+    <Setting Key="Age_ClearBalanceCust_Job_Start" SpName="Age_ClearBalanceCust_Job_Start" DbName="DBTXN.bodb02.wsv_alp" />
+    <Setting Key="Age_ClearBalanceCust_Job_BatchSel" SpName="Age_ClearBalanceCust_Job_BatchSel" DbName="DBTXN.bodb02.wsv_alp" />
+    <Setting Key="Age_ClearBalanceCust_Job_BatchProcess" SpName="Age_ClearBalanceCust_Job_BatchProcess" DbName="DBTXN.bodb02.wsv_alp" />
+    <Setting Key="Age_ClearBalanceCust_Job_ReTrySel" SpName="Age_ClearBalanceCust_Job_ReTrySel" DbName="DBTXN.bodb02.wsv_alp" />
+
+    <Setting Key="Age_ClearBalanceCust_Job_ProcessExport" SpName="Age_ClearBalanceCust_Job_ProcessExport" DbName="DBTXN.bodb02.wsv_alp" />
+    <Setting Key="Age_ClearBalanceCust_Job_ProcessHistoryImport" SpName="Age_ClearBalanceCust_Job_ProcessHistoryImport" DbName="DB054.bodb_CustomerLog.wsv_alp" />
+    <Setting Key="Age_ClearBalanceCust_Job_ConfigSel" SpName="Age_ClearBalanceCust_Job_ConfigSel" DbName="DBTXN.bodb02.wsv_alp" />
+    <Setting Key="Age_ClearBalanceCust_Job_NotifySel" SpName="Age_ClearBalanceCust_Job_NotifySel" DbName="DBTXN.bodb02.wsv_alp" />
+    <Setting Key="Age_ClearBalanceCust_Job_NotifyUpd" SpName="Age_ClearBalanceCust_Job_NotifyUpd" DbName="DBTXN.bodb02.wsv_alp" />
   </Function>
 </Functions>
