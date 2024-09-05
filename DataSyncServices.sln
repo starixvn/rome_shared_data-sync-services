@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -21,7 +21,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoTransfer.Tests", "tests\AutoTransfer.Tests\AutoTransfer.Tests.csproj", "{E379EBF3-33E2-487E-B35A-B882601BB00F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcurrentUser", "src\ConcurrentUser\ConcurrentUser.csproj", "{BD1EB389-2951-4519-841E-1DB5D0DBED1A}"
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoTransfer", "src\AutoTransfer\AutoTransfer.csproj", "{565ED6E6-82C8-4079-BECF-B1A397B817F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "S1.BackgroundTasks", "src\S1.BackgroundTasks\S1.BackgroundTasks.csproj", "{7435A90F-209E-4119-ABFF-AD6925EF2E9D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +58,10 @@ Global
 		{E379EBF3-33E2-487E-B35A-B882601BB00F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E379EBF3-33E2-487E-B35A-B882601BB00F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E379EBF3-33E2-487E-B35A-B882601BB00F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7435A90F-209E-4119-ABFF-AD6925EF2E9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7435A90F-209E-4119-ABFF-AD6925EF2E9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7435A90F-209E-4119-ABFF-AD6925EF2E9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7435A90F-209E-4119-ABFF-AD6925EF2E9D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -69,6 +74,7 @@ Global
 		{BD1EB389-2951-4519-841E-1DB5D0DBED1A} = {DEC5059B-AB35-451E-97A3-DB1F892E6055}
 		{565ED6E6-82C8-4079-BECF-B1A397B817F4} = {DEC5059B-AB35-451E-97A3-DB1F892E6055}
 		{E379EBF3-33E2-487E-B35A-B882601BB00F} = {C2650251-25EE-4C44-AB03-47FD893D2CAE}
+		{7435A90F-209E-4119-ABFF-AD6925EF2E9D} = {DEC5059B-AB35-451E-97A3-DB1F892E6055}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C6F98E0-241B-4E07-B501-237127693EE7}
