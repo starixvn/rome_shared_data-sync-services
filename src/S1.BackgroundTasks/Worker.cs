@@ -1,17 +1,25 @@
-using System.Diagnostics;
 using Hangfire;
 
 namespace S1.BackgroundTasks;
 
-public class Worker(IRecurringJobManager recurringJobManager, ILogger<Worker> logger) : BackgroundService
+public class Worker(IRecurringJobManager recurringJobManager, Fanex.Logging.ILogger logger) : BackgroundService
 {
     private readonly IRecurringJobManager _recurringJobManager = recurringJobManager;
-    private readonly ILogger<Worker> _logger = logger;
+    private readonly Fanex.Logging.ILogger _logger = logger;
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _recurringJobManager.AddOrUpdate("jobId", () => Console.WriteLine("Welcome user in Recurring Job Demo!"), Cron.Minutely);
+        try
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                _recurringJobManager.AddOrUpdate("jobId", () => Console.WriteLine("Welcome user in Recurring Job Demo!"), Cron.Minutely);
+            }
 
-        return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync(ex.Message, ex);
+        }
     }
 }
