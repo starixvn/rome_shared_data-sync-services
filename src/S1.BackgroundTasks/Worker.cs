@@ -1,23 +1,17 @@
+using System.Diagnostics;
+using Hangfire;
+
 namespace S1.BackgroundTasks;
 
-public class Worker : BackgroundService
+public class Worker(IRecurringJobManager recurringJobManager, ILogger<Worker> logger) : BackgroundService
 {
-    private readonly ILogger<Worker> _logger;
+    private readonly IRecurringJobManager _recurringJobManager = recurringJobManager;
+    private readonly ILogger<Worker> _logger = logger;
 
-    public Worker(ILogger<Worker> logger)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger = logger;
-    }
+        _recurringJobManager.AddOrUpdate("jobId", () => Console.WriteLine("Welcome user in Recurring Job Demo!"), Cron.Minutely);
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            }
-            await Task.Delay(1000, stoppingToken);
-        }
+        return Task.CompletedTask;
     }
 }
