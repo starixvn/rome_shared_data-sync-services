@@ -2,10 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-S1.BackgroundTasks-722e910c-24f7-4dd0-beb6-1a0bd143a6b2</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="App_Data\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Fanex.Data.Repository" Version="4.2.5.3" />
