@@ -12,10 +12,10 @@ namespace S1.BackgroundTasks.Criteria
 
         public int ErrCode { get; set; }
 
-        public string ErrMsg { get; set; }
+        public string ErrMessage { get; set; }
 
         public override string GetSettingKey() => "Task_WhiteLabelWinloss_ImportData";
 
-        public override bool IsValid() => FromDate <= ToDate && !string.IsNullOrWhiteSpace(JsonData);
+        public override bool IsValid() => FromDate <= ToDate;
     }
 }

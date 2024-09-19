@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Fanex.Data.Repository;
 using S1.BackgroundTasks.Criteria;
 
@@ -32,7 +34,7 @@ public class WinLossImportService(IDynamicRepository dynamicRepository, Fanex.Lo
         await dynamicRepository.ExecuteAsync(command);
         if (command.ErrCode > 0)
         {
-            await logger.ErrorAsync(command.ErrMsg);
+            await logger.ErrorAsync(command.ErrMessage);
         }
     }
 }
