@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Hangfire;
 using S1.BackgroundTasks.Helpers;
 using S1.BackgroundTasks.Services;
@@ -30,21 +31,29 @@ public class Worker(
 
     public async Task SyncPlayerWinLossData()
     {
-        var schedules = await _winLossImportService.GetSchedules();
-        if (schedules != null && schedules.Any())
+        try
         {
-            foreach (var schedule in schedules)
+            var schedules = await _winLossImportService.GetSchedules();
+            await _logger.InfoAsync(JsonSerializer.Serialize(schedules));
+            if (schedules != null && schedules.Any())
             {
-                DateTimeOffset fromDate = DateTime.SpecifyKind(schedule.FromDate, DateTimeKind.Local);
-                DateTimeOffset toDate = DateTime.SpecifyKind(schedule.ToDate, DateTimeKind.Local);
-                await _logger.InfoAsync($"Start sync player winloss from {fromDate} to {toDate}");
-                var winlossData = await RetryHelpers.Retry(() => _playerWinLossService.GetPlayerWinLoss(fromDate, toDate));
-                await RetryHelpers.Retry(async () =>
+                foreach (var schedule in schedules)
                 {
-                    await _winLossImportService.ImportPlayerWinLoss(schedule.FromDate, schedule.ToDate, winlossData);
-                    await _logger.InfoAsync($"Completed sync player winloss from {fromDate} to {toDate}");
-                });
+                    DateTimeOffset fromDate = DateTime.SpecifyKind(schedule.FromDate, DateTimeKind.Local);
+                    DateTimeOffset toDate = DateTime.SpecifyKind(schedule.ToDate, DateTimeKind.Local);
+                    await _logger.InfoAsync($"Start sync player winloss from {fromDate} to {toDate}");
+                    var winlossData = await RetryHelpers.Retry(() => _playerWinLossService.GetPlayerWinLoss(fromDate, toDate));
+                    await RetryHelpers.Retry(async () =>
+                    {
+                        await _winLossImportService.ImportPlayerWinLoss(schedule.FromDate, schedule.ToDate, winlossData);
+                        await _logger.InfoAsync($"Completed sync player winloss from {fromDate} to {toDate}");
+                    });
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync(ex.Message, ex);
         }
     }
 }

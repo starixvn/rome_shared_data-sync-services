@@ -28,8 +28,29 @@ try
     builder.Services.AddFanexSql(builder.Configuration);
     builder.Services.AddSingleton<IDynamicRepository, DynamicRepository>();
     builder.Services.AddSingleton<IWinLossImportService, WinLossImportService>();
-    builder.Services.AddHttpClient<IPlayerWinLossService, PlayerWinLossService>(httpClient => httpClient.BaseAddress = new Uri(builder.Configuration.GetValue<string>("S1:BaseUrl")))
-        .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler { AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip });
+
+    builder.Services.AddHttpClient<IPlayerWinLossService, PlayerWinLossService>(httpClient =>
+    {
+        httpClient.BaseAddress = new Uri(builder.Configuration.GetValue<string>("S1:BaseUrl"));
+    })
+    .ConfigurePrimaryHttpMessageHandler(_ =>
+    {
+        var httpClientHandler = new HttpClientHandler { AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
+        var proxyUrl = builder.Configuration.GetValue<string>("S1:Proxy");
+        if (!string.IsNullOrWhiteSpace(proxyUrl))
+        {
+            var proxy = new WebProxy
+            {
+                Address = new Uri(proxyUrl),
+                BypassProxyOnLocal = false,
+                UseDefaultCredentials = false,
+            };
+            httpClientHandler.Proxy = proxy;
+            httpClientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        }
+
+        return httpClientHandler;
+    });
 
     builder.Services.AddHangfire(config => config
         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
