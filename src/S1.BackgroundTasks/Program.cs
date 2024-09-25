@@ -5,6 +5,7 @@ using Fanex.Logging;
 using Fanex.Logging.RabbitMQ;
 using Hangfire;
 using Hangfire.InMemory;
+using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Builder;
 using S1.BackgroundTasks;
 using S1.BackgroundTasks.Services;
@@ -70,10 +71,16 @@ try
     var app = builder.Build();
     app.UseRouting();
     app.UseEndpoints(endpoints => endpoints.MapHealthChecks("/healthz"));
-    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+
+    var options = new DashboardOptions
     {
-        Authorization = [new HangfireAuthorizationFilter()]
-    });
+        Authorization = builder.Configuration.GetSection("Users").GetChildren().Select(x => new HangfireCustomBasicAuthenticationFilter
+        {
+            User = x.GetValue<string>("Username"),
+            Pass = x.GetValue<string>("Password")
+        })
+    };
+    app.UseHangfireDashboard("/hangfire", options);
     app.Run();
     Logger.Log.Info($"{appName} has been started up.");
 }
