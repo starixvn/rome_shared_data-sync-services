@@ -4,8 +4,8 @@ using Fanex.Data.SqlServer;
 using Fanex.Logging;
 using Fanex.Logging.RabbitMQ;
 using Hangfire;
+using Hangfire.Dashboard.BasicAuthorization;
 using Hangfire.InMemory;
-using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Builder;
 using S1.BackgroundTasks;
 using S1.BackgroundTasks.Services;
@@ -74,11 +74,15 @@ try
 
     var options = new DashboardOptions
     {
-        Authorization = builder.Configuration.GetSection("Users").GetChildren().Select(x => new HangfireCustomBasicAuthenticationFilter
+        Authorization = [new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
         {
-            User = x.GetValue<string>("Username"),
-            Pass = x.GetValue<string>("Password")
-        })
+            RequireSsl = false,
+            SslRedirect = false,
+            LoginCaseSensitive = true,
+            Users = builder.Configuration.GetSection("Users").GetChildren().Select(x=>new BasicAuthAuthorizationUser{
+                Login=x.GetValue<string>("Username"),
+                PasswordClear=x.GetValue<string>("Password")})
+        })]
     };
     app.UseHangfireDashboard("/hangfire", options);
     app.Run();
