@@ -6,11 +6,13 @@ using S1.BackgroundTasks.Services;
 namespace S1.BackgroundTasks;
 
 public class Worker(
+    IConfiguration configuration,
     IPlayerWinLossService playerWinLossService,
     IWinLossImportService winLossImportService,
     IRecurringJobManager recurringJobManager,
     Fanex.Logging.ILogger logger) : BackgroundService
 {
+    private readonly IConfiguration _configuration = configuration;
     private readonly IPlayerWinLossService _playerWinLossService = playerWinLossService;
     private readonly IWinLossImportService _winLossImportService = winLossImportService;
     private readonly IRecurringJobManager _recurringJobManager = recurringJobManager;
@@ -20,7 +22,7 @@ public class Worker(
     {
         try
         {
-            _recurringJobManager.AddOrUpdate("jobId", () => SyncPlayerWinLossData(), "15 0 * * *");
+            _recurringJobManager.AddOrUpdate("jobId", () => SyncPlayerWinLossData(), _configuration.GetValue<string>("CronExpression"));
             return Task.CompletedTask;
         }
         catch (Exception ex)
