@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Functions>
+    <Function Name="White Label Win Loss">
+        <Setting Key="DB052_Task_WhiteLabelWinloss_ImportData" SpName="Task_WhiteLabelWinloss_ImportData" DbName="DB052.bodb_WhiteLabel.wsv_alp" />
+        <Setting Key="DB053_Task_WhiteLabelWinloss_ImportData" SpName="Task_WhiteLabelWinloss_ImportData" DbName="DB053.bodb_WhiteLabel.wsv_alp" />
+        <Setting Key="Task_WhiteLabelWinloss_GetSchedule" SpName="Task_WhiteLabelWinloss_GetSchedule" DbName="DB052.bodb_WhiteLabel.wsv_alp" />
+    </Function>
+</Functions>
