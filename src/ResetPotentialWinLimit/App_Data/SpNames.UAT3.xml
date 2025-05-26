@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Functions>
+  <Function Name="Reset Potential Limit">
+    <Setting Key="TaskDailyResetAccumWinLoss_JobStart" SpName="TaskDailyResetAccumWinLoss_JobStart" DbName="DBCust.CustDB.wsv_alp" />
+    <Setting Key="TaskDailyResetAccumWinLoss_SuperListSel" SpName="TaskDailyResetAccumWinLoss_SuperListSel" DbName="DBCust.CustDB.wsv_alp" />
+    <Setting Key="TaskDailyResetAccumWinLoss_MemberListSel" SpName="TaskDailyResetAccumWinLoss_MemberListSel" DbName="DBCust.CustDB.wsv_alp" />
+    <Setting Key="TaskDailyResetAccumWinLoss_SuperStatusUpd" SpName="TaskDailyResetAccumWinLoss_SuperStatusUpd" DbName="DBCust.CustDB.wsv_alp" />
+    <Setting Key="TaskDailyResetAccumWinLoss_MemberStatusUpd" SpName="TaskDailyResetAccumWinLoss_MemberStatusUpd" DbName="DBCust.CustDB.wsv_alp" />
+    <Setting Key="CustWinLimitBet_Reset" SpName="CustWinLimitBet_Reset" DbName="DBSIC.bodb02.wsv_alp" />
+  </Function>
+</Functions>
