@@ -6,6 +6,8 @@ namespace AutoTransfer.Services;
 
 public interface ITransferService
 {
+    Task<ResultModel> ResetPotentialWinLimit(string custIds);
+
     Task<AutoTransferStartModel> Start(int pairOfBatch, string runningMode, string env);
     Task<IEnumerable<BatchModel>> SelectBatches(int numberOfThreads, string runningMode, string env);
     Task<ResultModel> ProcessBatch(BatchModel batch, string env);
@@ -23,6 +25,30 @@ public sealed class TransferService : ITransferService
 
     public TransferService(IDynamicRepository dynamicRepository)
         => this.dynamicRepository = dynamicRepository;
+
+    public async Task<ResultModel> ResetPotentialWinLimit(string custIds)
+    {
+        var criteria = new SelectMemberWinLimitCriteria(custIds);
+        var ids = await dynamicRepository.FetchAsync<int>(criteria);
+
+        if (ids.Any())
+        {
+            var resetCriteria = new ResetMemberWinLimitCriteria(ids);
+            await dynamicRepository.ExecuteAsync(resetCriteria);
+
+            return new ResultModel
+            {
+                ErrCode = resetCriteria.ErrCode,
+                ErrMsg = resetCriteria.ErrMsg
+            };
+        }
+
+        return new ResultModel
+        {
+            ErrCode = 0,
+            ErrMsg = "No records found"
+        };
+    }
 
 
     public async Task<AutoTransferStartModel> Start(int pairOfBatch, string runningMode, string env)
@@ -51,15 +77,22 @@ public sealed class TransferService : ITransferService
 
     public async Task<ResultModel> ProcessBatch(BatchModel batch, string env)
     {
-        var criteria = new ProcessBatchCriteria(batch, env);
+        var result = await ResetPotentialWinLimit(batch.ToCustIds);
 
-        await dynamicRepository.ExecuteAsync(criteria);
-
-        return new ResultModel
+        if (result.ErrCode == 0)
         {
-            ErrCode = criteria.ErrCode,
-            ErrMsg = criteria.ErrMsg,
-        };
+            var criteria = new ProcessBatchCriteria(batch, env);
+            await dynamicRepository.ExecuteAsync(criteria);
+
+            result = new ResultModel
+            {
+                ErrCode = criteria.ErrCode,
+                ErrMsg = criteria.ErrMsg,
+            };
+            return result;
+        }
+
+        return result;
     }
 
     public async Task<RetryBatchesModel> SelectRetryBatches(int numberOfThreads, string env)
