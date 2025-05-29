@@ -6,6 +6,6 @@
     <Setting Key="TaskDailyResetAccumWinLoss_MemberListSel" SpName="TaskDailyResetAccumWinLoss_MemberListSel" DbName="DBCust.CustDB.wsv_alp" />
     <Setting Key="TaskDailyResetAccumWinLoss_SuperStatusUpd" SpName="TaskDailyResetAccumWinLoss_SuperStatusUpd" DbName="DBCust.CustDB.wsv_alp" />
     <Setting Key="TaskDailyResetAccumWinLoss_MemberStatusUpd" SpName="TaskDailyResetAccumWinLoss_MemberStatusUpd" DbName="DBCust.CustDB.wsv_alp" />
-    <Setting Key="CustWinLimitBet_Reset" SpName="CustWinLimitBet_Reset" DbName="DBSIC.bodb02.wsv_alp" />
+    <Setting Key="CustWinLimitBet_Reset" SpName="Acc_CustWinLimitBet_Reset" DbName="DBSIC.bodb02.wsv_alp" />
   </Function>
 </Functions>
