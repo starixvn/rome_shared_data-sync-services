@@ -7,7 +7,6 @@ namespace AutoTransfer.Services;
 public interface ITransferService
 {
     Task<ResultModel> ResetPotentialWinLimit(string custIds);
-
     Task<AutoTransferStartModel> Start(int pairOfBatch, string runningMode, string env);
     Task<IEnumerable<BatchModel>> SelectBatches(int numberOfThreads, string runningMode, string env);
     Task<ResultModel> ProcessBatch(BatchModel batch, string env);
@@ -77,21 +76,22 @@ public sealed class TransferService : ITransferService
 
     public async Task<ResultModel> ProcessBatch(BatchModel batch, string env)
     {
-        var result = await ResetPotentialWinLimit(batch.ToCustIds);
+        var criteria = new ProcessBatchCriteria(batch, env);
+        await dynamicRepository.ExecuteAsync(criteria);
 
-        if (result.ErrCode == 0)
+        var result = new ResultModel
         {
-            var criteria = new ProcessBatchCriteria(batch, env);
-            await dynamicRepository.ExecuteAsync(criteria);
-
-            result = new ResultModel
+            ErrCode = criteria.ErrCode,
+            ErrMsg = criteria.ErrMsg,
+        };
+        if (criteria.ErrCode == 0)
+        {
+            var resultReset = await ResetPotentialWinLimit(batch.ToCustIds);
+            if (resultReset.ErrCode != 0)
             {
-                ErrCode = criteria.ErrCode,
-                ErrMsg = criteria.ErrMsg,
-            };
-            return result;
+                result = resultReset;
+            }
         }
-
         return result;
     }
 
