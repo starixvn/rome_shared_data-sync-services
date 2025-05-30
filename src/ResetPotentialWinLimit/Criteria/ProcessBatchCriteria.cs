@@ -11,9 +11,9 @@ public class ProcessBatchCriteria : NonQueryCommand
     }
 
     [SpParam(SqlParamName = "ListCustId")]
-    public string CustList { get; set; }
+    public string CustList { get; }
 
-    public override string GetSettingKey() => "ResetPotentialWinLimit_Job_Process";
+    public override string GetSettingKey() => "Acc_CustWinLimitBet_Reset";
 
     public override bool IsValid() => !string.IsNullOrEmpty(CustList);
 }

@@ -44,8 +44,6 @@ public class BaseResetPotentialWinLimitJob : BackgroundServiceBase
                 {
                     await HandleException(e);
                 }
-
-                await Task.Delay(settings.StartJobCheckingIntervalInMilliSeconds, stoppingToken);
             }
         }
     }
@@ -69,6 +67,7 @@ public class BaseResetPotentialWinLimitJob : BackgroundServiceBase
             await Task.Delay(UMDelayCheckingTimeInMilliseconds, stoppingToken);
         }
     }
+
     public Task Notify(string message)
     {
         var siteDBName = string.IsNullOrWhiteSpace(settings.SiteDBName)

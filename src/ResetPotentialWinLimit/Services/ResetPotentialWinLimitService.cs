@@ -1,4 +1,5 @@
 using Fanex.Data.Repository;
+using Newtonsoft.Json;
 using ResetPotentialWinLimit.Criteria;
 using ResetPotentialWinLimit.Models;
 
@@ -6,48 +7,51 @@ namespace ResetPotentialWinLimit.Services;
 
 public interface IResetPotentialWinLimitService
 {
-    Task Start();
-    JobConfigModel GetJobConfigModel(string env);
-    Task<IEnumerable<int>> SelectSuperList(int batchSize);
-    Task<IEnumerable<int>> SelectMemberList(int superId);
+    Task<JobStatusModel> GetJobStatus();
+    Task UpdateJobStatus(JobStatusModel jobStatus);
+    Task<MemberBatchModel> SelectMemberList(int batchSize, int lastMaxCustID);
     Task<ResultModel> ProcessBatch(string custList);
-    Task<ResultModel> UpdateSuperStatus(int custId, bool isCompleted);
-    Task<ResultModel> UpdateMemberStatus(string custList, bool isCompleted);
 }
 
 public sealed class ResetPotentialWinLimitService : IResetPotentialWinLimitService
 {
+    private const string VName = "ResetPotentialWinLimitJob";
     private readonly IDynamicRepository dynamicRepository;
 
     public ResetPotentialWinLimitService(IDynamicRepository dynamicRepository)
         => this.dynamicRepository = dynamicRepository;
 
-    public async Task Start()
+    public async Task<JobStatusModel> GetJobStatus()
     {
-        var criteria = new StartJobCriteria();
+        var criteria = new GetJobStatusCommand(VName);
+        await dynamicRepository.FetchAsync<JobStatusModel>(criteria);
+        var jobStatus =
+            string.IsNullOrWhiteSpace(criteria.VValue) ?
+            JobStatusModel.CreateDefault() :
+            JsonConvert.DeserializeObject<JobStatusModel>(criteria.VValue);
 
+        return jobStatus;
+    }
+
+    public async Task UpdateJobStatus(JobStatusModel jobStatus)
+    {
+        var json = JsonConvert.SerializeObject(jobStatus);
+        var criteria = new UpdateJobStatusCommand(VName, json);
         await dynamicRepository.ExecuteAsync(criteria);
     }
 
-    public JobConfigModel GetJobConfigModel(string env)
+    public async Task<MemberBatchModel> SelectMemberList(int batchSize, int lastMaxCustID)
     {
-        return JobConfigModel.CreateDefaultConfig();
+        var criteria = new SelectMemberListCriteria(batchSize, lastMaxCustID);
+
+        var memberIds = await dynamicRepository.FetchAsync<int>(criteria);
+
+        return new MemberBatchModel
+        {
+            MemberIds = memberIds,
+            LastMaxCustID = criteria.LastMaxCustID,
+        };
     }
-
-    public async Task<IEnumerable<int>> SelectSuperList(int batchSize)
-    {
-        var criteria = new SelectSuperListCriteria(batchSize);
-
-        return await dynamicRepository.FetchAsync<int>(criteria);
-    }
-
-    public async Task<IEnumerable<int>> SelectMemberList(int superId)
-    {
-        var criteria = new SelectMemberListCriteria(superId);
-
-        return await dynamicRepository.FetchAsync<int>(criteria);
-    }
-
 
     public async Task<ResultModel> ProcessBatch(string custList)
     {
@@ -66,31 +70,5 @@ public sealed class ResetPotentialWinLimitService : IResetPotentialWinLimitServi
                 ErrMsg = ex.Message,
             };
         }
-    }
-
-    public async Task<ResultModel> UpdateSuperStatus(int custId, bool isCompleted)
-    {
-        var criteria = new UpdateSuperStatusCriteria(custId, isCompleted);
-
-        await dynamicRepository.ExecuteAsync(criteria);
-
-        return new ResultModel
-        {
-            ErrCode = criteria.ErrCode,
-            ErrMsg = criteria.ErrMsg,
-        };
-    }
-
-    public async Task<ResultModel> UpdateMemberStatus(string custList, bool isCompleted)
-    {
-        var criteria = new UpdateMemberStatusCriteria(custList, isCompleted);
-
-        await dynamicRepository.ExecuteAsync(criteria);
-
-        return new ResultModel
-        {
-            ErrCode = criteria.ErrCode,
-            ErrMsg = criteria.ErrMsg,
-        };
     }
 }

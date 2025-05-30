@@ -31,81 +31,111 @@ namespace ResetPotentialWinLimit.Jobs
 
         public override async Task ExecuteInternal(CancellationToken stoppingToken)
         {
-            var dt = DateTime.Now;
-            var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
-            var jobConfigModel = resetPotentialWinLimitService.GetJobConfigModel(settings.Environment);
-
-            if (!jobConfigModel.IsActive)
+            var jobStatus = await resetPotentialWinLimitService.GetJobStatus();
+            if (jobStatus.HasCompletedToday())
             {
+                await WaitingToNextExecution(jobStatus, stoppingToken);
                 return;
             }
 
-            var runningTime = jobConfigModel.GetRunningTime(currentTime);
-            var isRunTime = IsRunTime(runningTime, currentTime);
-
-            if (!isRunTime)
+            var isRunningTime = jobStatus.IsRunTime();
+            if (!isRunningTime)
             {
+                await WaitingToNextExecution(jobStatus, stoppingToken);
                 return;
             }
-
-            await WaitForSystemUM(stoppingToken);
-            await resetPotentialWinLimitService.Start();
 
             await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start resetting potential win limit."), scheduleJob, nameof(ExecuteInternal));
             await Notify("Start resetting potential win limit.");
+
+            jobStatus.RunningDate = DateTime.Now;
+            var isCompleted = false;
 
             while (true)
             {
                 try
                 {
                     await WaitForSystemUM(stoppingToken);
-
-                    var superIds = await resetPotentialWinLimitService.SelectSuperList(settings.BatchSize);
-                    if (!superIds.Any())
+                    var memberBatch = await resetPotentialWinLimitService.SelectMemberList(settings.BatchSize, jobStatus.LastMaxCustID);
+                    if (!memberBatch.MemberIds.Any())
                     {
+                        jobStatus.CompletedTime = DateTime.Now;
+                        await resetPotentialWinLimitService.UpdateJobStatus(jobStatus);
+                        isCompleted = true;
                         break;
                     }
 
-                    var threads = new List<Task>();
-                    foreach (var superId in superIds)
+                    var processResult = await ProcessBatch(jobStatus, memberBatch, stoppingToken);
+                    if (processResult.ErrCode != 0)
                     {
-                        var memberIds = await resetPotentialWinLimitService.SelectMemberList(superId);
-                        threads.Add(ProcessBatch(superId, memberIds, stoppingToken));
-                        await Task.WhenAll(threads);
+                        break;
                     }
                 }
                 catch (Exception ex)
                 {
                     await HandleException(ex);
-                    await Task.Delay(settings.DelayExecuteBatchesTimeInMilliSeconds, stoppingToken);
+                    break;
                 }
             }
 
-            await Notify("completed resetting potential win limit.");
-            await loggerService.Error(new Exception($"{scheduleJob.JobInfo} completed resetting potential win limit."), scheduleJob, nameof(ExecuteInternal));
+            if (isCompleted)
+            {
+                await Notify("completed resetting potential win limit.");
+                await loggerService.Error(new Exception($"{scheduleJob.JobInfo} completed resetting potential win limit."), scheduleJob, nameof(ExecuteInternal));
+                await WaitingToNextExecution(jobStatus, stoppingToken);
+            }
+            else
+            {
+                await Notify("failed resetting potential win limit.");
+                await loggerService.Error(new Exception($"{scheduleJob.JobInfo} failed resetting potential win limit."), scheduleJob, nameof(ExecuteInternal));
+                await StopAsync(stoppingToken);
+            }
         }
 
-        private async Task ProcessBatch(int superId, IEnumerable<int> memberIds, CancellationToken stoppingToken)
+        private async Task WaitingToNextExecution(JobStatusModel jobStatus, CancellationToken stoppingToken)
+        {
+            var currentTime = DateTime.Now;
+            var executionTime = jobStatus.GetRunningTime();
+            var todayDefaultTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, executionTime.Hour, executionTime.Minute, 0);
+
+            var nextExecutionTime = currentTime < todayDefaultTime ? todayDefaultTime : todayDefaultTime.AddDays(1);
+            var delayTime = nextExecutionTime.Subtract(currentTime).TotalMilliseconds;
+            await Task.Delay((int)delayTime, stoppingToken);
+        }
+
+        private async Task<ResultModel> ProcessBatch(JobStatusModel jobStatus, MemberBatchModel memberBatch, CancellationToken stoppingToken)
         {
             var retryCount = 0;
-            var custList = string.Join(",", memberIds);
+            var custList = string.Join(",", memberBatch.MemberIds);
 
             while (retryCount < MAX_RETRY_COUNT)
             {
-                var result = await resetPotentialWinLimitService.ProcessBatch(custList);
-
-                if (result.ErrCode == 0)
+                try
                 {
-                    break;
+                    var processResult = await resetPotentialWinLimitService.ProcessBatch(custList);
+                    if (processResult.ErrCode == 0)
+                    {
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await HandleException(ex);
                 }
 
                 await Task.Delay(settings.DelayRetryInMilliSeconds, stoppingToken);
                 retryCount++;
             }
 
-            var isCompleted = retryCount < MAX_RETRY_COUNT;
-            await resetPotentialWinLimitService.UpdateMemberStatus(custList, isCompleted);
-            await resetPotentialWinLimitService.UpdateSuperStatus(superId, isCompleted);
+            if (retryCount < MAX_RETRY_COUNT)
+            {
+                jobStatus.LastMaxCustID = memberBatch.MemberIds.Max();
+                await resetPotentialWinLimitService.UpdateJobStatus(jobStatus);
+                return new ResultModel { ErrCode = 0 };
+            }
+
+            await Notify($"Reset potential win limit failed for: {custList}");
+            return new ResultModel { ErrCode = 1 };
         }
     }
 }

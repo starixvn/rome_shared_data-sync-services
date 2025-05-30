@@ -4,14 +4,17 @@ namespace ResetPotentialWinLimit.Criteria;
 
 public class SelectMemberListCriteria : CriteriaBase
 {
-    public SelectMemberListCriteria(int superId)
+    public SelectMemberListCriteria(int batchSize, int lastMaxCustID)
     {
-        SuperId = superId;
+        BatchSize = batchSize;
+        LastMaxCustID = lastMaxCustID;
     }
 
-    public int SuperId { get; set; }
+    public int BatchSize { get; }
 
-    public override string GetSettingKey() => "TaskDailyResetAccumWinLoss_MemberListSel";
+    public int LastMaxCustID { get; set; }
 
-    public override bool IsValid() => SuperId > 0;
+    public override string GetSettingKey() => "Task_ResetAccumWinLoss_MemberListSel";
+
+    public override bool IsValid() => BatchSize > 0;
 }
