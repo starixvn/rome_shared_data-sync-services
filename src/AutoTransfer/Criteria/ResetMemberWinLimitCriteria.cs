@@ -6,10 +6,10 @@ public class ResetMemberWinLimitCriteria : NonQueryCommand
 {
     public ResetMemberWinLimitCriteria(IEnumerable<int> custIds)
     {
-        CustIds = string.Join(",", custIds);
+        ListCustId = custIds != null ? string.Join(",", custIds) : string.Empty;
     }
 
-    public string CustIds { get; set; }
+    public string ListCustId { get; set; }
 
     public int ErrCode { get; set; }
 
@@ -17,5 +17,5 @@ public class ResetMemberWinLimitCriteria : NonQueryCommand
 
     public override string GetSettingKey() => "CustWinLimitBet_Reset";
 
-    public override bool IsValid() => !string.IsNullOrEmpty(CustIds);
+    public override bool IsValid() => !string.IsNullOrEmpty(ListCustId);
 }

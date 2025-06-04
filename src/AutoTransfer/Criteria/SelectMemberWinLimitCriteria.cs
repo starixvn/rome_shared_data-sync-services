@@ -6,12 +6,12 @@ public class SelectMemberWinLimitCriteria : CriteriaBase
 {
     public SelectMemberWinLimitCriteria(string custIds)
     {
-        CustIds = custIds;
+        ListCustId = custIds;
     }
 
-    public string CustIds { get; set; }
+    public string ListCustId { get; set; }
 
     public override string GetSettingKey() => "Acc_CustPotentialWinLimit_SelAutoResetMembers";
 
-    public override bool IsValid() => !string.IsNullOrEmpty(CustIds);
+    public override bool IsValid() => !string.IsNullOrEmpty(ListCustId);
 }
