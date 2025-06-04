@@ -7,6 +7,7 @@ namespace ResetPotentialWinLimit.Services;
 
 public interface IResetPotentialWinLimitService
 {
+    Task<JobConfigModel> GetJobConfig();
     Task<JobStatusModel> GetJobStatus();
     Task UpdateJobStatus(JobStatusModel jobStatus);
     Task<MemberBatchModel> SelectMemberList(int batchSize, int lastMaxCustID);
@@ -15,15 +16,26 @@ public interface IResetPotentialWinLimitService
 
 public sealed class ResetPotentialWinLimitService : IResetPotentialWinLimitService
 {
-    private const string VName = "ResetPotentialWinLimitJob";
     private readonly IDynamicRepository dynamicRepository;
 
     public ResetPotentialWinLimitService(IDynamicRepository dynamicRepository)
         => this.dynamicRepository = dynamicRepository;
 
+    public async Task<JobConfigModel> GetJobConfig()
+    {
+        var criteria = new GetJobStatusCommand("ResetPotentialWinLimitJob_Config");
+        await dynamicRepository.FetchAsync<JobConfigModel>(criteria);
+        var jobConfig =
+            string.IsNullOrWhiteSpace(criteria.VValue) ?
+            JobConfigModel.CreateDefault() :
+            JsonConvert.DeserializeObject<JobConfigModel>(criteria.VValue);
+
+        return jobConfig;
+    }
+
     public async Task<JobStatusModel> GetJobStatus()
     {
-        var criteria = new GetJobStatusCommand(VName);
+        var criteria = new GetJobStatusCommand("ResetPotentialWinLimitJob_Status");
         await dynamicRepository.FetchAsync<JobStatusModel>(criteria);
         var jobStatus =
             string.IsNullOrWhiteSpace(criteria.VValue) ?
@@ -36,7 +48,7 @@ public sealed class ResetPotentialWinLimitService : IResetPotentialWinLimitServi
     public async Task UpdateJobStatus(JobStatusModel jobStatus)
     {
         var json = JsonConvert.SerializeObject(jobStatus);
-        var criteria = new UpdateJobStatusCommand(VName, json);
+        var criteria = new UpdateJobStatusCommand("ResetPotentialWinLimitJob_Status", json);
         await dynamicRepository.ExecuteAsync(criteria);
     }
 

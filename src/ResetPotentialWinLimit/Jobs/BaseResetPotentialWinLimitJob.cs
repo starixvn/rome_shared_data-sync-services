@@ -59,7 +59,7 @@ public class BaseResetPotentialWinLimitJob : BackgroundServiceBase
         {
             var umInfo = await GetUnderMaintenanceTime();
 
-            if (!umInfo.IsUnderMaintenanceTime)
+            if (umInfo == null || !umInfo.IsUnderMaintenanceTime)
             {
                 break;
             }
