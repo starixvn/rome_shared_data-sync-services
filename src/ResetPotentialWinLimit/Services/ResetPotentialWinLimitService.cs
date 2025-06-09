@@ -67,20 +67,9 @@ public sealed class ResetPotentialWinLimitService : IResetPotentialWinLimitServi
 
     public async Task<ResultModel> ProcessBatch(string custList)
     {
-        try
-        {
-            var criteria = new ProcessBatchCriteria(custList);
-            await dynamicRepository.ExecuteAsync(criteria);
+        var criteria = new ProcessBatchCriteria(custList);
+        await dynamicRepository.ExecuteAsync(criteria);
 
-            return new ResultModel();
-        }
-        catch (Exception ex)
-        {
-            return new ResultModel
-            {
-                ErrCode = 1,
-                ErrMsg = ex.Message,
-            };
-        }
+        return new ResultModel();
     }
 }

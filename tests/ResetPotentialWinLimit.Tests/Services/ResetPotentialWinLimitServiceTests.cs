@@ -165,23 +165,4 @@ public class ResetPotentialWinLimitServiceTests
         Assert.Null(result.ErrMsg);
         _mockDynamicRepository.Verify(x => x.ExecuteAsync(It.IsAny<ProcessBatchCriteria>()), Times.Once);
     }
-
-    [Fact]
-    public async Task ProcessBatch_WhenExceptionOccurs_ReturnsErrorResult()
-    {
-        // Arrange
-        var custList = "1,2,3";
-        var expectedError = "Test error";
-        _mockDynamicRepository
-            .Setup(x => x.ExecuteAsync(It.IsAny<ProcessBatchCriteria>()))
-            .ThrowsAsync(new Exception(expectedError));
-
-        // Act
-        var result = await _service.ProcessBatch(custList);
-
-        // Assert
-        Assert.Equal(1, result.ErrCode);
-        Assert.Equal(expectedError, result.ErrMsg);
-        _mockDynamicRepository.Verify(x => x.ExecuteAsync(It.IsAny<ProcessBatchCriteria>()), Times.Once);
-    }
 }
