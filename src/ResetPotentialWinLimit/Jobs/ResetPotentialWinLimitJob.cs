@@ -34,6 +34,13 @@ namespace ResetPotentialWinLimit.Jobs
         {
             var jobConfig = await resetPotentialWinLimitService.GetJobConfig();
             var jobStatus = await resetPotentialWinLimitService.GetJobStatus();
+
+            if (jobStatus.RunningDate == null || !DateTimeExtentions.IsSameDate(jobStatus.RunningDate.Value.Date, DateTimeExtentions.Now.Date))
+            {
+                jobStatus.LastMaxCustID = 0;
+                jobStatus.CompletedTime = null;
+            }
+
             if (!jobConfig.IsActive && jobStatus.HasCompletedToday())
             {
                 await WaitingToNextExecution(jobConfig, jobStatus, stoppingToken);
