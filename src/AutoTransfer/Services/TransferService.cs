@@ -114,11 +114,20 @@ public sealed class TransferService : ITransferService
 
         await dynamicRepository.ExecuteAsync(criteria);
 
-        return new ResultModel
+        var result = new ResultModel
         {
             ErrCode = criteria.ErrCode,
             ErrMsg = criteria.ErrMsg,
         };
+        if (criteria.ErrCode == 0)
+        {
+            var resultReset = await ResetPotentialWinLimit(batch.ToCustIds);
+            if (resultReset.ErrCode != 0)
+            {
+                result = resultReset;
+            }
+        }
+        return result;
     }
 
     public async Task<ResultModel> ImportLogs(string env)
