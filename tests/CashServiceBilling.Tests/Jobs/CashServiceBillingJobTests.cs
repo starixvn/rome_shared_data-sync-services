@@ -32,7 +32,6 @@ namespace CashServiceBilling.Tests.Jobs
             _settingsMock = new Mock<IOptions<JobsSettingsModel>>();
             _settings = new JobsSettingsModel
             {
-                DelayRetryInMilliSeconds = 1000
             };
             _settingsMock.Setup(x => x.Value).Returns(_settings);
 
