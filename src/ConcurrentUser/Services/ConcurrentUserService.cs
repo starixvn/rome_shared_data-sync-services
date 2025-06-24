@@ -33,6 +33,6 @@ public class ConcurrentUserService : IConcurrentUserService
         var command = new InsertConcurrentUserCriteria(users, serverName);
         await dynamicRepository.ExecuteAsync(command);
 
-        return new Result(command.ErrCode, command.ErrorMsg);
+        return new Result(command.ErrCode.ToString(), command.ErrorMsg);
     }
 }
