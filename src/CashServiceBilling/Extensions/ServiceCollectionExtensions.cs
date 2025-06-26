@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Shared.Configuration;
 using CashServiceBilling.Jobs;
 using CashServiceBilling.Services;
+using CashServiceBilling.Models;
 
 namespace CashServiceBilling.Extensions;
 
@@ -10,7 +11,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var isTest = configuration.GetValue<bool>("IsTest");
+        services.Configure<JobsSettingsModel>(options => configuration.GetSection("JobsSettings").Bind(options));
+        var isTest = configuration.GetSection("JobsSettings:IsTest").Get<bool>();
         var scheduleJobs = configuration.GetSection("ScheduleJobs")
             .Get<ScheduleJob[]>()?
             .Where(job => job.IsActive)
@@ -24,6 +26,8 @@ public static class ServiceCollectionExtensions
         return services
             .AddSingleton(scheduleJobs)
             .AddSingleton<ICashServiceBillingService, CashServiceBillingService>()
-            .AddHostedService<CashServiceBillingJob>();
+            .AddHostedService<CashServiceBillingJob>()
+            .AddSingleton<IAccumulatedCreditService, AccumulatedCreditService>()
+            .AddSingleton<AccumulatedCreditJob>();
     }
 }
