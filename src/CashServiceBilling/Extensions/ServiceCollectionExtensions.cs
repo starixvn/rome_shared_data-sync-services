@@ -27,7 +27,10 @@ public static class ServiceCollectionExtensions
             .AddSingleton(scheduleJobs)
             .AddSingleton<ICashServiceBillingService, CashServiceBillingService>()
             .AddHostedService<CashServiceBillingJob>()
+            .AddSingleton<ITransactionLogService, TransactionLogService>()
             .AddSingleton<IAccumulatedCreditService, AccumulatedCreditService>()
-            .AddSingleton<AccumulatedCreditJob>();
+            .AddSingleton<AccumulatedCreditJob>()
+            .AddSingleton<ITransactionService, TransactionService>()
+            .AddHostedService<UpdateTransExpiredStatusJob>();
     }
 }

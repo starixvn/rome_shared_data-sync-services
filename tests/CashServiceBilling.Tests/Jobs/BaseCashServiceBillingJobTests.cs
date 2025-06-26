@@ -4,12 +4,9 @@ using ONEbook.UM.Configurations;
 using ONEbook.UM.Services;
 using ONEbook.UM.Models;
 using Shared.Configuration;
-using Shared.Jobs;
 using Shared.Services;
 using CashServiceBilling.Models;
-using CashServiceBilling.Services;
 using CashServiceBilling.Jobs;
-using Xunit;
 
 namespace CashServiceBilling.Tests.Jobs;
 
@@ -19,7 +16,6 @@ public class BaseCashServiceBillingJobTests
     private readonly Mock<ILoggerService> _mockLoggerService;
     private readonly Mock<IMaintenanceService> _mockMaintenanceService;
     private readonly UMClientConfiguration _mockUmClientConfiguration;
-    private readonly Mock<ICashServiceBillingService> _mockCashServiceBillingService;
     private readonly Mock<IOptions<JobsSettingsModel>> _mockSettings;
     private readonly JobsSettingsModel _settingsModel;
 
@@ -29,7 +25,6 @@ public class BaseCashServiceBillingJobTests
         _mockLoggerService = new Mock<ILoggerService>();
         _mockMaintenanceService = new Mock<IMaintenanceService>();
         _mockUmClientConfiguration = new UMClientConfiguration();
-        _mockCashServiceBillingService = new Mock<ICashServiceBillingService>();
         _mockSettings = new Mock<IOptions<JobsSettingsModel>>();
         _settingsModel = new JobsSettingsModel { NotifyCategory = "TestCategory" };
         _mockSettings.Setup(x => x.Value).Returns(_settingsModel);
@@ -46,7 +41,6 @@ public class BaseCashServiceBillingJobTests
             _mockLoggerService.Object,
             _mockMaintenanceService.Object,
             _mockUmClientConfiguration,
-            _mockCashServiceBillingService.Object,
             _mockSettings.Object
         );
 
@@ -67,7 +61,6 @@ public class BaseCashServiceBillingJobTests
             _mockLoggerService.Object,
             _mockMaintenanceService.Object,
             _mockUmClientConfiguration,
-            _mockCashServiceBillingService.Object,
             _mockSettings.Object
         );
 
@@ -90,9 +83,8 @@ public class TestCashServiceBillingJob : BaseCashServiceBillingJob
         ILoggerService loggerService,
         IMaintenanceService maintenanceService,
         UMClientConfiguration umClientConfiguration,
-        ICashServiceBillingService cashServiceBillingService,
         IOptions<JobsSettingsModel> settings)
-        : base(scheduleJob, loggerService, maintenanceService, umClientConfiguration, cashServiceBillingService, settings)
+        : base(scheduleJob, loggerService, maintenanceService, umClientConfiguration, settings)
     {
     }
 

@@ -5,14 +5,12 @@ using Shared.Configuration;
 using Shared.Jobs;
 using Shared.Services;
 using CashServiceBilling.Models;
-using CashServiceBilling.Services;
 
 namespace CashServiceBilling.Jobs;
 
 public class BaseCashServiceBillingJob : BackgroundServiceBase
 {
     public readonly JobsSettingsModel settings;
-    public readonly ICashServiceBillingService cashServiceBillingService;
     private const int UMDelayCheckingTimeInMilliseconds = 60000;
 
     public BaseCashServiceBillingJob(
@@ -20,12 +18,10 @@ public class BaseCashServiceBillingJob : BackgroundServiceBase
         ILoggerService loggerService,
         IMaintenanceService maintenanceService,
         UMClientConfiguration umClientConfiguration,
-        ICashServiceBillingService cashServiceBillingService,
         IOptions<JobsSettingsModel> settings)
         : base(scheduleJob, loggerService, maintenanceService, umClientConfiguration)
     {
         this.settings = settings.Value;
-        this.cashServiceBillingService = cashServiceBillingService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -48,7 +44,7 @@ public class BaseCashServiceBillingJob : BackgroundServiceBase
         }
     }
 
-    public override async Task ExecuteInternal(CancellationToken stoppingToken)
+    public override Task ExecuteInternal(CancellationToken stoppingToken)
     {
         throw new NotImplementedException();
     }

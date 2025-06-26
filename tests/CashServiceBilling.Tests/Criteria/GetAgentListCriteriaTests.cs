@@ -1,5 +1,4 @@
 using CashServiceBilling.Criteria;
-using Xunit;
 
 namespace CashServiceBilling.Tests.Criteria;
 

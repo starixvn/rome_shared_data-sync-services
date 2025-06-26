@@ -16,15 +16,18 @@ public class AccumulatedCreditService : IAccumulatedCreditService
     private readonly IDynamicRepository repository;
     private readonly Fanex.Logging.ILogger logger;
     private readonly IConfiguration configuration;
+    private readonly ITransactionLogService transactionLogService;
 
     public AccumulatedCreditService(
         IDynamicRepository repository,
         Fanex.Logging.ILogger logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ITransactionLogService transactionLogService)
     {
         this.repository = repository;
         this.logger = logger;
         this.configuration = configuration;
+        this.transactionLogService = transactionLogService;
     }
 
     public async Task AccumulateCreditToAgent(bool isTest, int size)
@@ -51,7 +54,7 @@ public class AccumulatedCreditService : IAccumulatedCreditService
         await logger.ErrorAsync($"{JobName} completed.", category);
     }
 
-    internal async Task<string> GetMemberYesterdayWinLoss(bool isTest)
+    public async Task<string> GetMemberYesterdayWinLoss(bool isTest)
     {
         var criteria = new GetCashMemberListCriteria(isTest);
         await repository.ExecuteAsync(criteria);
@@ -59,7 +62,7 @@ public class AccumulatedCreditService : IAccumulatedCreditService
         return criteria.CustIdList;
     }
 
-    internal async Task ProcessMemberYesterdayWinLoss(IEnumerable<MemberYesterdayWL> memberYesterdayWL)
+    public async Task ProcessMemberYesterdayWinLoss(IEnumerable<MemberYesterdayWL> memberYesterdayWL)
     {
         var (cashAccumCreditTblJson, logs) = await AddManualDepositTrans(JsonSerializer.Serialize(memberYesterdayWL));
 
@@ -74,12 +77,11 @@ public class AccumulatedCreditService : IAccumulatedCreditService
 
         if (logs.Any())
         {
-            var logTasks = logs.GroupBy(l => l.CustDBGroupId, (key, group) => WriteLog(group, key));
-            await Task.WhenAll(logTasks);
+            await transactionLogService.WriteLogs(logs);
         }
     }
 
-    internal async Task<Tuple<string, IEnumerable<LogEntry>>> AddManualDepositTrans(string custIdList)
+    public async Task<Tuple<string, IEnumerable<LogEntry>>> AddManualDepositTrans(string custIdList)
     {
         var criteria = new AddManualDepositTransCriteria(custIdList);
         var logs = await repository.FetchAsync<LogEntry>(criteria);
@@ -87,7 +89,7 @@ public class AccumulatedCreditService : IAccumulatedCreditService
         return Tuple.Create(criteria.CashAccumCreditTbl, logs);
     }
 
-    internal async Task<ResultModel> SyncCashAccumCredit(string cashAccumCreditTbl, short custDBGroupId)
+    public async Task<ResultModel> SyncCashAccumCredit(string cashAccumCreditTbl, short custDBGroupId)
     {
         var criteria = new SyncCashAccumCreditCriteria(cashAccumCreditTbl, custDBGroupId);
         await repository.ExecuteAsync(criteria);
@@ -99,42 +101,6 @@ public class AccumulatedCreditService : IAccumulatedCreditService
         }
 
         return result;
-    }
-
-    internal async Task WriteLog(IEnumerable<LogEntry> logs, short custDBGroupId)
-    {
-        foreach (var item in logs)
-        {
-            var criteria = new WriteLogRunSPCriteria(
-                item.UserId,
-                item.CustId,
-                item.ActionId,
-                item.TrackingValueMask,
-                item.TrackingValueMask2,
-                item.TrackingValue,
-                item.TrackingValue2);
-            var isSuccess = await WriteLog(criteria);
-
-            if (!isSuccess)
-            {
-                criteria.CustDBGroupId = custDBGroupId;
-                await WriteLog(criteria);
-            }
-        }
-    }
-
-    internal async Task<bool> WriteLog(INonQueryCommand criteria)
-    {
-        try
-        {
-            await repository.ExecuteAsync(criteria);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            await logger.ErrorAsync($"{criteria.GetSettingKey()} failed.", ex);
-            return false;
-        }
     }
 }
 
