@@ -4,7 +4,6 @@ using Shared.Extensions;
 using CashServiceBilling.Extensions;
 using Hangfire;
 using Hangfire.MemoryStorage;
-using CashServiceBilling.Jobs;
 
 namespace CashServiceBilling;
 
@@ -41,13 +40,7 @@ public sealed class Startup
                 }
             }) // Configure Hangfire dashboard (optional)
             .UseRouting()
-            .UseEndpoints(endpoints => endpoints.MapHealthChecks("/"));
-
-        var accumulatedCreditJob = app.ApplicationServices.GetRequiredService<AccumulatedCreditJob>();
-        RecurringJob.AddOrUpdate(
-            "Returning-Accumulated-Credit-To-Agent",
-            () => accumulatedCreditJob.ExecuteAsync(),
-            accumulatedCreditJob.Cron,
-            new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
+            .UseEndpoints(endpoints => endpoints.MapHealthChecks("/"))
+            .AddJobs();
     }
 }
