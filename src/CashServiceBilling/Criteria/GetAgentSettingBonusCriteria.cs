@@ -4,12 +4,18 @@ namespace CashServiceBilling.Criteria;
 
 public class GetAgentSettingBonusCriteria : NonQueryCommand
 {
-    public GetAgentSettingBonusCriteria(bool isTest)
+    public GetAgentSettingBonusCriteria(bool isTest, DateTime mondayLastWeek, DateTime sundayLastWeek)
     {
         IsTest = isTest;
+        MondayLastWeek = mondayLastWeek;
+        SundayLastWeek = sundayLastWeek;
     }
 
     public bool IsTest { get; }
+
+    public DateTime MondayLastWeek { get; }
+
+    public DateTime SundayLastWeek { get; }
 
     public string AgentPromotion { get; set; }
 

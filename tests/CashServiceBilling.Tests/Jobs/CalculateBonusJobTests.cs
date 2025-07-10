@@ -11,28 +11,32 @@ public class CalculateBonusJobTests
     private readonly Mock<IOptions<JobsSettingsModel>> _mockJobSettings;
     private readonly Mock<ICalculateBonusService> _mockCalculateBonusService;
     private readonly JobsSettingsModel _jobsSettings;
-    private ScheduleJob[] _scheduleJobs;
+    private readonly ScheduleJob _activeScheduleJob;
 
     public CalculateBonusJobTests()
     {
         _jobsSettings = new JobsSettingsModel
         {
-            CalculateBonusJobCron = "0 0 * * *",
-            IsTest = false
+            CalculateBonusJobCron = "0 0 * * *"
         };
 
         _mockJobSettings = new Mock<IOptions<JobsSettingsModel>>();
         _mockJobSettings.Setup(x => x.Value).Returns(_jobsSettings);
 
         _mockCalculateBonusService = new Mock<ICalculateBonusService>();
+
+        _activeScheduleJob = new ScheduleJob
+        {
+            Name = nameof(CalculateBonusJob),
+            IsActive = true
+        };
     }
 
     [Fact]
-    public void Cron_ReturnsCorrectValue()
+    public void Cron_ReturnsExpectedValue()
     {
         // Arrange
-        _scheduleJobs = new ScheduleJob[] { new ScheduleJob { Name = "CalculateBonusJob", IsActive = true } };
-        var job = new CalculateBonusJob(_mockJobSettings.Object, _scheduleJobs, _mockCalculateBonusService.Object);
+        var job = new CalculateBonusJob(_mockJobSettings.Object, new[] { _activeScheduleJob }, _mockCalculateBonusService.Object);
 
         // Act
         var result = job.Cron;
@@ -42,45 +46,47 @@ public class CalculateBonusJobTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenScheduleJobIsNull_DoesNotCallService()
+    public async Task ExecuteAsync_WithActiveScheduleJob_CallsCalculateBonusService()
     {
         // Arrange
-        _scheduleJobs = Array.Empty<ScheduleJob>();
-        var job = new CalculateBonusJob(_mockJobSettings.Object, _scheduleJobs, _mockCalculateBonusService.Object);
+        var job = new CalculateBonusJob(_mockJobSettings.Object, new[] { _activeScheduleJob }, _mockCalculateBonusService.Object);
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockCalculateBonusService.Verify(x => x.AddBonusTransaction(It.IsAny<bool>(), It.IsAny<ScheduleJob>()), Times.Never);
+        _mockCalculateBonusService.Verify(s => s.CalculateAndAddBonusTransactions(_jobsSettings, _activeScheduleJob), Times.Once);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenScheduleJobIsInactive_DoesNotCallService()
+    public async Task ExecuteAsync_WithInactiveScheduleJob_DoesNotCallCalculateBonusService()
     {
         // Arrange
-        _scheduleJobs = new ScheduleJob[] { new ScheduleJob { Name = "CalculateBonusJob", IsActive = false } };
-        var job = new CalculateBonusJob(_mockJobSettings.Object, _scheduleJobs, _mockCalculateBonusService.Object);
+        var inactiveJob = new ScheduleJob
+        {
+            Name = nameof(CalculateBonusJob),
+            IsActive = false
+        };
+
+        var job = new CalculateBonusJob(_mockJobSettings.Object, new[] { inactiveJob }, _mockCalculateBonusService.Object);
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockCalculateBonusService.Verify(x => x.AddBonusTransaction(It.IsAny<bool>(), It.IsAny<ScheduleJob>()), Times.Never);
+        _mockCalculateBonusService.Verify(s => s.CalculateAndAddBonusTransactions(It.IsAny<JobsSettingsModel>(), It.IsAny<ScheduleJob>()), Times.Never);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenScheduleJobIsActive_CallsServiceWithCorrectParameters()
+    public async Task ExecuteAsync_WithNullScheduleJob_DoesNotCallCalculateBonusService()
     {
         // Arrange
-        var scheduleJob = new ScheduleJob { Name = "CalculateBonusJob", IsActive = true };
-        _scheduleJobs = new ScheduleJob[] { scheduleJob };
-        var job = new CalculateBonusJob(_mockJobSettings.Object, _scheduleJobs, _mockCalculateBonusService.Object);
+        var job = new CalculateBonusJob(_mockJobSettings.Object, Array.Empty<ScheduleJob>(), _mockCalculateBonusService.Object);
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockCalculateBonusService.Verify(x => x.AddBonusTransaction(_jobsSettings.IsTest, scheduleJob), Times.Once);
+        _mockCalculateBonusService.Verify(s => s.CalculateAndAddBonusTransactions(It.IsAny<JobsSettingsModel>(), It.IsAny<ScheduleJob>()), Times.Never);
     }
 }

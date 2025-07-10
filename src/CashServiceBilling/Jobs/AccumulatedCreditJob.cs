@@ -30,12 +30,6 @@ public sealed class AccumulatedCreditJob
             return;
         }
 
-        var batchSizeParameter = scheduleJob.Parameters.FirstOrDefault(p => p.Key.Equals("BatchSize", StringComparison.OrdinalIgnoreCase));
-        if (batchSizeParameter == null || !int.TryParse(batchSizeParameter.Value, out var batchSize))
-        {
-            batchSize = 500;
-        }
-
-        await accumulatedCreditService.AccumulateCreditToAgent(jobsSettings.IsTest, batchSize);
+        await accumulatedCreditService.AccumulateCreditToAgent(jobsSettings, scheduleJob);
     }
 }

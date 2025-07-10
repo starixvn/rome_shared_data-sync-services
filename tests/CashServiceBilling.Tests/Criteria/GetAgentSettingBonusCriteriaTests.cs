@@ -1,26 +1,30 @@
-using CashServiceBilling.Criteria;
-
-namespace CashServiceBilling.Tests.Criteria;
+namespace CashServiceBilling.Criteria.Tests;
 
 public class GetAgentSettingBonusCriteriaTests
 {
     [Fact]
-    public void Constructor_ShouldSetIsTestCorrectly()
+    public void Constructor_InitializesProperties_Correctly()
     {
-        // Arrange & Act
-        var criteriaTrue = new GetAgentSettingBonusCriteria(true);
-        var criteriaFalse = new GetAgentSettingBonusCriteria(false);
+        // Arrange
+        bool isTest = true;
+        DateTime mondayLastWeek = new DateTime(2023, 6, 5);
+        DateTime sundayLastWeek = new DateTime(2023, 6, 11);
+
+        // Act
+        var criteria = new GetAgentSettingBonusCriteria(isTest, mondayLastWeek, sundayLastWeek);
 
         // Assert
-        Assert.True(criteriaTrue.IsTest);
-        Assert.False(criteriaFalse.IsTest);
+        Assert.Equal(isTest, criteria.IsTest);
+        Assert.Equal(mondayLastWeek, criteria.MondayLastWeek);
+        Assert.Equal(sundayLastWeek, criteria.SundayLastWeek);
+        Assert.Null(criteria.AgentPromotion);
     }
 
     [Fact]
-    public void GetSettingKey_ShouldReturnCorrectKey()
+    public void GetSettingKey_ReturnsCorrectKey()
     {
         // Arrange
-        var criteria = new GetAgentSettingBonusCriteria(false);
+        var criteria = new GetAgentSettingBonusCriteria(false, DateTime.Now, DateTime.Now);
 
         // Act
         string result = criteria.GetSettingKey();
@@ -30,10 +34,10 @@ public class GetAgentSettingBonusCriteriaTests
     }
 
     [Fact]
-    public void IsValid_ShouldAlwaysReturnTrue()
+    public void IsValid_AlwaysReturnsTrue()
     {
         // Arrange
-        var criteria = new GetAgentSettingBonusCriteria(false);
+        var criteria = new GetAgentSettingBonusCriteria(false, DateTime.Now, DateTime.Now);
 
         // Act
         bool result = criteria.IsValid();
@@ -43,16 +47,16 @@ public class GetAgentSettingBonusCriteriaTests
     }
 
     [Fact]
-    public void AgentPromotion_ShouldSetAndGetCorrectly()
+    public void AgentPromotion_CanBeSetAndRetrieved()
     {
         // Arrange
-        var criteria = new GetAgentSettingBonusCriteria(false);
-        string expected = "TestPromotion";
+        var criteria = new GetAgentSettingBonusCriteria(false, DateTime.Now, DateTime.Now);
+        string expectedPromotion = "TestPromotion";
 
         // Act
-        criteria.AgentPromotion = expected;
+        criteria.AgentPromotion = expectedPromotion;
 
         // Assert
-        Assert.Equal(expected, criteria.AgentPromotion);
+        Assert.Equal(expectedPromotion, criteria.AgentPromotion);
     }
 }

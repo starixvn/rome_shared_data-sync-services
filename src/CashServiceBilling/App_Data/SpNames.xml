@@ -3,6 +3,8 @@
   <Function Name="Shared Functions">
     <Setting Key="SiteDb_-1_WriteLog_CashService_UserLog_Transfer" SpName="WriteLog_CashService_UserLog_Transfer" DbName="DBLOG.bodb_CustomerLog.wsv_CashService" />
     <Setting Key="SiteDb_3_WriteLog_CashService_UserLog_Transfer" SpName="WriteLog_CashService_UserLog_Transfer" DbName="DBSIC.bodb_CustomerLog.wsv_CashService" />
+    <Setting Key="Age_SelBalanceUpDay" SpName="Age_SelBalanceUpDay" DbName="DBAGE.bodb02.wsv_CashService" />
+    <Setting Key="Age_Rpt_GetProductDetail" SpName="Age_Rpt_GetProductDetail" DbName="DBAGE.bodb02.wsv_CashService" />
   </Function>
   <Function Name="Cash Service Billing">
     <Setting Key="Age_CashServiceBilling_AgentSel" SpName="Age_CashServiceBilling_AgentSel" DbName="DBCUST.AgencyCashService.wsv_CashService" />
@@ -16,10 +18,12 @@
     <Setting Key="CustDB_0_WriteLog_CashService_UserLog_RunSP" SpName="WriteLog_CashService_UserLog_RunSP" DbName="DBCUST.CustDB.wsv_CashService" />
   </Function>
   <Function Name="Update Transaction Expired Status">
-      <Setting Key="Task_CashService_UpdateExpiredStatus" SpName="Task_CashService_UpdateExpiredStatus" DbName="DBSIC.bodb02.wsv_CashService" />
+      <Setting Key="Task_CashService_UpdateExpiredStatus" SpName="Task_CashService_UpdateExpiredStatus_uat2" DbName="DBSIC.bodb02.wsv_CashService" />
   </Function>
   <Function Name="Calculate Bonus">
     <Setting Key="Task_CashService_AgentSetting_Sel" SpName="Task_CashService_AgentSetting_Sel" DbName="DBCUST.AgencyCashService.wsv_CashService" />
+    <Setting Key="Task_CashService_CashPromotionCal" SpName="Task_CashService_CashPromotionCal" DbName="DBAGE.bodb02.wsv_CashService" />
+    <Setting Key="Task_CashService_BonusTransaction_Sel" SpName="Task_CashService_BonusTransaction_Sel" DbName="DBAGE.bodb02.wsv_CashService" />
     <Setting Key="SiteDB_3_Task_CashService_BonusTransaction_Ins" SpName="Task_CashService_BonusTransaction_Ins" DbName="DBSIC.bodb02.wsv_CashService" />
   </Function>
 </Functions>

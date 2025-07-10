@@ -2,56 +2,61 @@ using System.Text.Json;
 using CashServiceBilling.Criteria;
 using CashServiceBilling.Models;
 using Fanex.Data.Repository;
+using Shared.Configuration;
+using Shared.Services;
 
 namespace CashServiceBilling.Services;
 
 public interface IAccumulatedCreditService
 {
-    public Task AccumulateCreditToAgent(bool isTest, int size);
+    public Task AccumulateCreditToAgent(JobsSettingsModel jobsSettings, ScheduleJob scheduleJob);
 }
 
 public class AccumulatedCreditService : IAccumulatedCreditService
 {
     private const string JobName = "[Returning accumulated credit to Agent]";
     private readonly IDynamicRepository repository;
-    private readonly Fanex.Logging.ILogger logger;
-    private readonly IConfiguration configuration;
+    private readonly ILoggerService logger;
     private readonly ITransactionLogService transactionLogService;
 
     public AccumulatedCreditService(
         IDynamicRepository repository,
-        Fanex.Logging.ILogger logger,
-        IConfiguration configuration,
+        ILoggerService logger,
         ITransactionLogService transactionLogService)
     {
         this.repository = repository;
         this.logger = logger;
-        this.configuration = configuration;
         this.transactionLogService = transactionLogService;
     }
 
-    public async Task AccumulateCreditToAgent(bool isTest, int size)
+    public async Task AccumulateCreditToAgent(JobsSettingsModel jobsSettings, ScheduleJob scheduleJob)
     {
-        var category = configuration.GetValue<string>("JobsSettings:NotifyCategory");
-        await logger.ErrorAsync($"Start {JobName}.", category);
+        await logger.Notify($"Start {JobName}.", jobsSettings.NotifyCategory);
 
         var winlossCount = 0;
-        var winlossJson = await GetMemberYesterdayWinLoss(isTest);
-
-        if (!string.IsNullOrWhiteSpace(winlossJson))
+        try
         {
-            var winloss = JsonSerializer.Deserialize<MemberYesterdayWL[]>(winlossJson);
-            winlossCount = winloss?.Length ?? 0;
+            var winlossJson = await GetMemberYesterdayWinLoss(jobsSettings.IsTest);
 
-            if (winlossCount > 0)
+            if (!string.IsNullOrWhiteSpace(winlossJson))
             {
-                var winlossBatches = winloss.Chunk(size);
-                await Task.WhenAll(winlossBatches.Select(ProcessMemberYesterdayWinLoss));
+                var winloss = JsonSerializer.Deserialize<MemberYesterdayWL[]>(winlossJson);
+                winlossCount = winloss?.Length ?? 0;
+
+                if (winlossCount > 0)
+                {
+                    var winlossBatches = winloss.Chunk(GetBatchSize(scheduleJob));
+                    await Task.WhenAll(winlossBatches.Select(ProcessMemberYesterdayWinLoss));
+                }
             }
         }
+        catch (Exception ex)
+        {
+            await logger.Error(ex, scheduleJob, nameof(AccumulateCreditToAgent));
+        }
 
-        await logger.ErrorAsync($"{JobName} Cash Member Yesterday WinLoss Count: {winlossCount}.", category);
-        await logger.ErrorAsync($"{JobName} completed.", category);
+        await logger.Notify($"{JobName} Cash Member Yesterday WinLoss Count: {winlossCount}.", jobsSettings.NotifyCategory);
+        await logger.Notify($"{JobName} completed.", jobsSettings.NotifyCategory);
     }
 
     public async Task<string> GetMemberYesterdayWinLoss(bool isTest)
@@ -97,10 +102,20 @@ public class AccumulatedCreditService : IAccumulatedCreditService
 
         if (criteria.ErrCode != 0 && !string.IsNullOrWhiteSpace(criteria.ErrMsg))
         {
-            await logger.ErrorAsync($"{criteria.GetSettingKey()} failed. CashAccumCreditTbl: {cashAccumCreditTbl}, ErrCode: {criteria.ErrCode}, ErrMsg: {criteria.ErrMsg}");
+            await logger.Error($"{criteria.GetSettingKey()} failed. CashAccumCreditTbl: {cashAccumCreditTbl}, ErrCode: {criteria.ErrCode}, ErrMsg: {criteria.ErrMsg}");
         }
 
         return result;
+    }
+
+    public static int GetBatchSize(ScheduleJob scheduleJob)
+    {
+        var batchSizeParameter = scheduleJob.Parameters
+            .FirstOrDefault(p => p.Key.Equals("BatchSize", StringComparison.OrdinalIgnoreCase));
+
+        return batchSizeParameter != null && int.TryParse(batchSizeParameter.Value, out var batchSize)
+            ? batchSize
+            : 500; // Default batch size
     }
 }
 

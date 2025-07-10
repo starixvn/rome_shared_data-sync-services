@@ -3,233 +3,209 @@ using CashServiceBilling.Criteria;
 using CashServiceBilling.Models;
 using CashServiceBilling.Services;
 using Fanex.Data.Repository;
-using Microsoft.Extensions.Configuration;
 using Moq;
+using Shared.Configuration;
+using Shared.Services;
 
 namespace CashServiceBilling.Tests.Services;
 
 public class AccumulatedCreditServiceTests
 {
-    private readonly Mock<IDynamicRepository> mockRepository;
-    private readonly Mock<Fanex.Logging.ILogger> mockLogger;
-    private readonly Mock<IConfiguration> mockConfiguration;
-    private readonly Mock<ITransactionLogService> mockTransactionLogService;
-    private readonly Mock<IConfigurationSection> mockConfigurationSection;
-    private readonly AccumulatedCreditService service;
+    private readonly Mock<IDynamicRepository> _repositoryMock;
+    private readonly Mock<ILoggerService> _loggerMock;
+    private readonly Mock<ITransactionLogService> _transactionLogServiceMock;
+    private readonly AccumulatedCreditService _service;
 
     public AccumulatedCreditServiceTests()
     {
-        mockRepository = new Mock<IDynamicRepository>();
-        mockLogger = new Mock<Fanex.Logging.ILogger>();
-        mockConfiguration = new Mock<IConfiguration>();
-        mockTransactionLogService = new Mock<ITransactionLogService>();
-        mockConfigurationSection = new Mock<IConfigurationSection>();
-
-        mockConfigurationSection.Setup(x => x.Value).Returns("TestCategory");
-        mockConfiguration.Setup(x => x.GetSection("JobsSettings:NotifyCategory")).Returns(mockConfigurationSection.Object);
-        // Replace GetValue with GetSection().Value since GetValue is an extension method
-        mockConfiguration.Setup(x => x.GetSection("JobsSettings:NotifyCategory").Value).Returns("TestCategory");
-
-        service = new AccumulatedCreditService(mockRepository.Object, mockLogger.Object, mockConfiguration.Object, mockTransactionLogService.Object);
+        _repositoryMock = new Mock<IDynamicRepository>();
+        _loggerMock = new Mock<ILoggerService>();
+        _transactionLogServiceMock = new Mock<ITransactionLogService>();
+        _service = new AccumulatedCreditService(_repositoryMock.Object, _loggerMock.Object, _transactionLogServiceMock.Object);
     }
 
     [Fact]
-    public async Task GetMemberYesterdayWinLoss_ShouldExecuteCriteria_AndReturnCustIdList()
+    public async Task AccumulateCreditToAgent_WithNoWinLoss_LogsCorrectCounts()
     {
         // Arrange
-        const string expectedCustIdList = "[{\"CustId\":123,\"Amount\":100.0}]";
-        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
-            .Callback<INonQueryCommand>(c =>
+        var jobSettings = new JobsSettingsModel { NotifyCategory = "TestCategory", IsTest = false };
+        var scheduleJob = new ScheduleJob();
+
+        _repositoryMock.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
+            .Callback<INonQueryCommand>(criteria =>
             {
-                var criteria = c as GetCashMemberListCriteria;
-                criteria.CustIdList = expectedCustIdList;
-            })
-            .Returns(Task.FromResult(0));
+                var c = criteria as GetCashMemberListCriteria;
+                c.CustIdList = "";
+            });
 
         // Act
-        var result = await service.GetMemberYesterdayWinLoss(false);
+        await _service.AccumulateCreditToAgent(jobSettings, scheduleJob);
 
         // Assert
-        Assert.Equal(expectedCustIdList, result);
-        mockRepository.Verify(r => r.ExecuteAsync(It.Is<GetCashMemberListCriteria>(c => c.IsTest == false)), Times.Once);
+        _loggerMock.Verify(l => l.Notify(It.Is<string>(s => s.Contains("Cash Member Yesterday WinLoss Count: 0")), jobSettings.NotifyCategory), Times.Once);
+        _loggerMock.Verify(l => l.Notify(It.Is<string>(s => s.Contains("completed")), jobSettings.NotifyCategory), Times.Once);
     }
 
     [Fact]
-    public async Task AddManualDepositTrans_ShouldFetchLogs_AndReturnTupleWithResults()
+    public async Task AccumulateCreditToAgent_WithWinLossData_ProcessesData()
     {
         // Arrange
-        const string custIdList = "[{\"CustId\":123,\"Amount\":100.0}]";
-        const string expectedCashAccumCreditTbl = "[{\"CustId\":123,\"Amount\":100.0,\"CustDBGroupId\":1}]";
-        var expectedLogs = new List<LogEntry> { new LogEntry { TrackingValueMask = "Test log" } };
+        var jobSettings = new JobsSettingsModel { NotifyCategory = "TestCategory", IsTest = false };
+        var scheduleJob = new ScheduleJob { Parameters = new[] { new ScheduleJobParameter { Key = "BatchSize", Value = "200" } } };
 
-        mockRepository.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<ICriteria>()))
-            .Callback<ICriteria>(c =>
-            {
-                var criteria = c as AddManualDepositTransCriteria;
-                criteria.CashAccumCreditTbl = expectedCashAccumCreditTbl;
-            })
-            .ReturnsAsync(expectedLogs);
-
-        // Act
-        var result = await service.AddManualDepositTrans(custIdList);
-
-        // Assert
-        Assert.Equal(expectedCashAccumCreditTbl, result.Item1);
-        Assert.Same(expectedLogs, result.Item2);
-        mockRepository.Verify(r => r.FetchAsync<LogEntry>(It.Is<AddManualDepositTransCriteria>(c => c.CustIdList == custIdList)), Times.Once);
-    }
-
-    [Fact]
-    public async Task SyncCashAccumCredit_WhenSuccess_ShouldReturnSuccessResult()
-    {
-        // Arrange
-        const string cashAccumCreditTbl = "[{\"CustId\":123,\"Amount\":100.0,\"CustDBGroupId\":1}]";
-        const short custDBGroupId = 1;
-
-        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
-            .Callback<INonQueryCommand>(c =>
-            {
-                var criteria = c as SyncCashAccumCreditCriteria;
-                criteria.ErrCode = 0;
-                criteria.ErrMsg = string.Empty;
-            })
-            .Returns(Task.FromResult(0));
-
-        // Act
-        var result = await service.SyncCashAccumCredit(cashAccumCreditTbl, custDBGroupId);
-
-        // Assert
-        Assert.Equal(0, result.ErrCode);
-        Assert.Equal(string.Empty, result.ErrMsg);
-        mockRepository.Verify(r => r.ExecuteAsync(It.Is<SyncCashAccumCreditCriteria>(
-            c => c.CashAccumCreditTbl == cashAccumCreditTbl && c.CustDBGroupId == custDBGroupId)), Times.Once);
-        mockLogger.Verify(l => l.ErrorAsync(It.IsAny<string>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task SyncCashAccumCredit_WhenError_ShouldLogError()
-    {
-        // Arrange
-        const string cashAccumCreditTbl = "[{\"CustId\":123,\"Amount\":100.0,\"CustDBGroupId\":1}]";
-        const short custDBGroupId = 1;
-
-        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
-            .Callback<INonQueryCommand>(c =>
-            {
-                var criteria = c as SyncCashAccumCreditCriteria;
-                criteria.ErrCode = 1;
-                criteria.ErrMsg = "Error occurred";
-            })
-            .Returns(Task.FromResult(0));
-
-        // Act
-        var result = await service.SyncCashAccumCredit(cashAccumCreditTbl, custDBGroupId);
-
-        // Assert
-        Assert.Equal(1, result.ErrCode);
-        Assert.Equal("Error occurred", result.ErrMsg);
-        mockLogger.Verify(l => l.ErrorAsync(It.IsAny<string>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task AccumulateCreditToAgent_WhenNoWinLoss_ShouldOnlyLogStartAndComplete()
-    {
-        // Arrange
-        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
-            .Callback<INonQueryCommand>(c =>
-            {
-                var criteria = c as GetCashMemberListCriteria;
-                criteria.CustIdList = string.Empty;
-            })
-            .Returns(Task.FromResult(0));
-
-        // Act
-        await service.AccumulateCreditToAgent(false, 100);
-
-        // Assert
-        mockLogger.Verify(l => l.ErrorAsync(It.IsAny<string>(), "TestCategory"), Times.Exactly(3));
-    }
-
-    [Fact]
-    public async Task AccumulateCreditToAgent_WhenHasWinLoss_ShouldProcessData()
-    {
-        // Arrange
-        var memberWinLoss = new[]
+        var winlossData = new[]
         {
-                new MemberYesterdayWL { CustId = 123, YesterdayWL = 100 },
-                new MemberYesterdayWL { CustId = 456, YesterdayWL = 200 }
+                new MemberYesterdayWL { CustId = 1 },
+                new MemberYesterdayWL { CustId = 2 }
             };
 
-        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
-            .Callback<INonQueryCommand>(c =>
+        _repositoryMock.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
+            .Callback<INonQueryCommand>(criteria =>
             {
-                if (c is GetCashMemberListCriteria)
+                if (criteria is GetCashMemberListCriteria getCashMemberListCriteria)
                 {
-                    var criteria = c as GetCashMemberListCriteria;
-                    criteria.CustIdList = JsonSerializer.Serialize(memberWinLoss);
+                    getCashMemberListCriteria.CustIdList = JsonSerializer.Serialize(winlossData);
                 }
-                else if (c is SyncCashAccumCreditCriteria) // Setup for SyncCashAccumCredit
+                else if (criteria is SyncCashAccumCreditCriteria getSyncCashAccumCreditCriteria)
                 {
-                    var criteria = c as SyncCashAccumCreditCriteria;
-                    criteria.ErrCode = 0;
-                    criteria.ErrMsg = string.Empty;
+                    getSyncCashAccumCreditCriteria.ErrCode = 0;
+                    getSyncCashAccumCreditCriteria.ErrMsg = "";
                 }
-            })
-            .Returns(Task.FromResult(0));
+            });
 
-        // Setup for AddManualDepositTrans
-        mockRepository.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<ICriteria>()))
-            .Callback<ICriteria>(c =>
+        var cashAccumData = new[]
+        {
+            new CashAccumCredit { CustDBGroupId = 1, CustId = 1 },
+            new CashAccumCredit { CustDBGroupId = 1, CustId = 2 }
+        };
+
+        _repositoryMock.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<ICriteria>()))
+            .Callback<ICriteria>(criteria =>
             {
-                var criteria = c as AddManualDepositTransCriteria;
-                criteria.CashAccumCreditTbl = JsonSerializer.Serialize(
-                new[]
-                {
-                    new CashAccumCredit { CustId = 123, AccumCreditReturn = 100, CustDBGroupId = 1 },
-                    new CashAccumCredit { CustId = 456, AccumCreditReturn = 200, CustDBGroupId = 1 }
-                });
+                var c = criteria as AddManualDepositTransCriteria;
+                c.CashAccumCreditTbl = JsonSerializer.Serialize(cashAccumData);
             })
-            .ReturnsAsync(new List<LogEntry> { new LogEntry { TrackingValue = "Test log" } });
+            .ReturnsAsync(new List<LogEntry>());
 
         // Act
-        await service.AccumulateCreditToAgent(false, 10);
+        await _service.AccumulateCreditToAgent(jobSettings, scheduleJob);
 
         // Assert
-        mockTransactionLogService.Verify(t => t.WriteLogs(It.IsAny<IEnumerable<LogEntry>>()), Times.Once);
-        mockRepository.Verify(r => r.ExecuteAsync(It.IsAny<SyncCashAccumCreditCriteria>()), Times.Once);
+        _loggerMock.Verify(l => l.Notify(It.Is<string>(s => s.Contains("Cash Member Yesterday WinLoss Count: 2")), jobSettings.NotifyCategory), Times.Once);
+        _repositoryMock.Verify(r => r.ExecuteAsync(It.IsAny<SyncCashAccumCreditCriteria>()), Times.Once);
     }
 
     [Fact]
-    public async Task ProcessMemberYesterdayWinLoss_ShouldCallAddManualDepositTransAndSyncCashAccumCredit()
+    public async Task GetMemberYesterdayWinLoss_ReturnsExpectedData()
     {
         // Arrange
-        var memberWinLoss = new[]
-        {
-            new MemberYesterdayWL { CustId = 123, YesterdayWL = 100 }
-        };
-
-        var cashAccumCredit = new[]
-        {
-            new CashAccumCredit { CustId = 123, AccumCreditReturn = 100, CustDBGroupId = 1 }
-        };
-
-        mockRepository.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<ICriteria>()))
-            .Callback<ICriteria>(c =>
+        var expectedJson = "[{\"CustId\":1}]";
+        _repositoryMock.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
+            .Callback<INonQueryCommand>(criteria =>
             {
-                var criteria = c as AddManualDepositTransCriteria;
-                criteria.CashAccumCreditTbl = JsonSerializer.Serialize(cashAccumCredit);
-            })
-            .ReturnsAsync(new List<LogEntry> { new LogEntry { TrackingValue = "Test log" } });
-
-        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<SyncCashAccumCreditCriteria>()))
-            .Returns(Task.FromResult(0));
+                var c = criteria as GetCashMemberListCriteria;
+                c.CustIdList = expectedJson;
+            });
 
         // Act
-        await service.ProcessMemberYesterdayWinLoss(memberWinLoss);
+        var result = await _service.GetMemberYesterdayWinLoss(false);
 
         // Assert
-        mockRepository.Verify(r => r.FetchAsync<LogEntry>(It.IsAny<AddManualDepositTransCriteria>()), Times.Once);
-        mockRepository.Verify(r => r.ExecuteAsync(It.IsAny<SyncCashAccumCreditCriteria>()), Times.Once);
-        mockTransactionLogService.Verify(t => t.WriteLogs(It.IsAny<IEnumerable<LogEntry>>()), Times.Once);
+        Assert.Equal(expectedJson, result);
+        _repositoryMock.Verify(r => r.ExecuteAsync(It.Is<GetCashMemberListCriteria>(c => !c.IsTest)), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessMemberYesterdayWinLoss_CallsExpectedDependencies()
+    {
+        // Arrange
+        var memberWinLoss = new[] { new MemberYesterdayWL { CustId = 1 } };
+        var cashAccumData = new[] { new CashAccumCredit { CustDBGroupId = 1, CustId = 1 } };
+        var logs = new List<LogEntry> { new LogEntry() };
+
+        _repositoryMock.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<ICriteria>()))
+            .Callback<ICriteria>(criteria =>
+            {
+                var c = criteria as AddManualDepositTransCriteria;
+                c.CashAccumCreditTbl = JsonSerializer.Serialize(cashAccumData);
+            })
+            .ReturnsAsync(logs);
+
+        _repositoryMock.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
+            .Callback<INonQueryCommand>(criteria =>
+            {
+                var c = criteria as SyncCashAccumCreditCriteria;
+                c.ErrCode = 0;
+                c.ErrMsg = "";
+            });
+
+        // Act
+        await _service.ProcessMemberYesterdayWinLoss(memberWinLoss);
+
+        // Assert
+        _repositoryMock.Verify(r => r.FetchAsync<LogEntry>(It.IsAny<AddManualDepositTransCriteria>()), Times.Once);
+        _repositoryMock.Verify(r => r.ExecuteAsync(It.IsAny<SyncCashAccumCreditCriteria>()), Times.Once);
+        _transactionLogServiceMock.Verify(t => t.WriteLogs(logs), Times.Once);
+    }
+
+    [Fact]
+    public async Task SyncCashAccumCredit_WithError_LogsError()
+    {
+        // Arrange
+        var cashAccumData = JsonSerializer.Serialize(new[] { new CashAccumCredit { CustId = 1 } });
+        const short groupId = 1;
+        const int errCode = 500;
+        const string errMsg = "Error message";
+
+        _repositoryMock.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
+            .Callback<INonQueryCommand>(criteria =>
+            {
+                var c = criteria as SyncCashAccumCreditCriteria;
+                c.ErrCode = errCode;
+                c.ErrMsg = errMsg;
+            });
+
+        // Act
+        var result = await _service.SyncCashAccumCredit(cashAccumData, groupId);
+
+        // Assert
+        Assert.Equal(errCode, result.ErrCode);
+        Assert.Equal(errMsg, result.ErrMsg);
+        _loggerMock.Verify(l => l.Error(It.Is<string>(s => s.Contains(errMsg))), Times.Once);
+    }
+
+    [Fact]
+    public void GetBatchSize_WithBatchSizeParameter_ReturnsCorrectValue()
+    {
+        // Arrange
+        var scheduleJob = new ScheduleJob
+        {
+            Parameters = new[]
+            {
+                new ScheduleJobParameter { Key = "BatchSize", Value = "100" }
+            }
+        };
+
+        // Act
+        var result = AccumulatedCreditService.GetBatchSize(scheduleJob);
+
+        // Assert
+        Assert.Equal(100, result);
+    }
+
+    [Fact]
+    public void GetBatchSize_WithoutBatchSizeParameter_ReturnsDefaultValue()
+    {
+        // Arrange
+        var scheduleJob = new ScheduleJob
+        {
+            Parameters = Array.Empty<ScheduleJobParameter>()
+        };
+
+        // Act
+        var result = AccumulatedCreditService.GetBatchSize(scheduleJob);
+
+        // Assert
+        Assert.Equal(500, result);
     }
 }

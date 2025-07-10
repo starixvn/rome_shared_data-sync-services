@@ -30,6 +30,6 @@ public sealed class CalculateBonusJob
             return;
         }
 
-        await calculateBonusService.AddBonusTransaction(jobsSettings.IsTest, scheduleJob);
+        await calculateBonusService.CalculateAndAddBonusTransactions(jobsSettings, scheduleJob);
     }
 }
