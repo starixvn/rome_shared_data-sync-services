@@ -1,152 +1,86 @@
-using CashServiceBilling.Jobs;
 using CashServiceBilling.Models;
 using CashServiceBilling.Services;
 using Microsoft.Extensions.Options;
 using Moq;
 using Shared.Configuration;
 
-namespace CashServiceBilling.Tests.Jobs;
+namespace CashServiceBilling.Jobs.Tests;
 
 public class CalculateBonusJobTests
 {
-    private readonly Mock<IOptions<JobsSettingsModel>> _mockJobsSettings;
-    private readonly Mock<ICalculateBonusService> _mockPromotionService;
-    private readonly ScheduleJob[] _scheduleJobs;
-    private readonly JobsSettingsModel _jobsSettingsModel;
+    private readonly Mock<IOptions<JobsSettingsModel>> _mockJobSettings;
+    private readonly Mock<ICalculateBonusService> _mockCalculateBonusService;
+    private readonly JobsSettingsModel _jobsSettings;
+    private ScheduleJob[] _scheduleJobs;
 
     public CalculateBonusJobTests()
     {
-        _mockJobsSettings = new Mock<IOptions<JobsSettingsModel>>();
-        _mockPromotionService = new Mock<ICalculateBonusService>();
-        _jobsSettingsModel = new JobsSettingsModel
+        _jobsSettings = new JobsSettingsModel
         {
             CalculateBonusJobCron = "0 0 * * *",
             IsTest = false
         };
-        _mockJobsSettings.Setup(x => x.Value).Returns(_jobsSettingsModel);
-        _scheduleJobs = new[]
-        {
-                new ScheduleJob
-                {
-                    Name = "CalculateBonusJob",
-                    IsActive = true,
-                    Parameters = new[]
-                    {
-                        new ScheduleJobParameter { Key = "BatchSize", Value = "1000" }
-                    }
-                }
-            };
+
+        _mockJobSettings = new Mock<IOptions<JobsSettingsModel>>();
+        _mockJobSettings.Setup(x => x.Value).Returns(_jobsSettings);
+
+        _mockCalculateBonusService = new Mock<ICalculateBonusService>();
     }
 
     [Fact]
     public void Cron_ReturnsCorrectValue()
     {
         // Arrange
-        var job = new CalculateBonusJob(_mockJobsSettings.Object, _scheduleJobs, _mockPromotionService.Object);
+        _scheduleJobs = new ScheduleJob[] { new ScheduleJob { Name = "CalculateBonusJob", IsActive = true } };
+        var job = new CalculateBonusJob(_mockJobSettings.Object, _scheduleJobs, _mockCalculateBonusService.Object);
 
         // Act
-        var cron = job.Cron;
+        var result = job.Cron;
 
         // Assert
-        Assert.Equal(_jobsSettingsModel.CalculateBonusJobCron, cron);
+        Assert.Equal(_jobsSettings.CalculateBonusJobCron, result);
     }
 
     [Fact]
-    public async Task ExecuteAsync_JobIsActive_CallsAddPendingPromotionWithCorrectParameters()
+    public async Task ExecuteAsync_WhenScheduleJobIsNull_DoesNotCallService()
     {
         // Arrange
-        var job = new CalculateBonusJob(_mockJobsSettings.Object, _scheduleJobs, _mockPromotionService.Object);
+        _scheduleJobs = Array.Empty<ScheduleJob>();
+        var job = new CalculateBonusJob(_mockJobSettings.Object, _scheduleJobs, _mockCalculateBonusService.Object);
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockPromotionService.Verify(s => s.AddBonusTransaction(false, 1000), Times.Once);
+        _mockCalculateBonusService.Verify(x => x.AddBonusTransaction(It.IsAny<bool>(), It.IsAny<ScheduleJob>()), Times.Never);
     }
 
     [Fact]
-    public async Task ExecuteAsync_JobIsNotActive_DoesNotCallAddPendingPromotion()
+    public async Task ExecuteAsync_WhenScheduleJobIsInactive_DoesNotCallService()
     {
         // Arrange
-        var inactiveScheduleJobs = new[]
-        {
-                new ScheduleJob
-                {
-                    Name = "CalculateBonusJob",
-                    IsActive = false,
-                    Parameters = new[]
-                    {
-                        new ScheduleJobParameter { Key = "BatchSize", Value = "1000" }
-                    }
-                }
-            };
-        var job = new CalculateBonusJob(_mockJobsSettings.Object, inactiveScheduleJobs, _mockPromotionService.Object);
+        _scheduleJobs = new ScheduleJob[] { new ScheduleJob { Name = "CalculateBonusJob", IsActive = false } };
+        var job = new CalculateBonusJob(_mockJobSettings.Object, _scheduleJobs, _mockCalculateBonusService.Object);
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockPromotionService.Verify(s => s.AddBonusTransaction(It.IsAny<bool>(), It.IsAny<int>()), Times.Never);
+        _mockCalculateBonusService.Verify(x => x.AddBonusTransaction(It.IsAny<bool>(), It.IsAny<ScheduleJob>()), Times.Never);
     }
 
     [Fact]
-    public async Task ExecuteAsync_JobNotFound_DoesNotCallAddPendingPromotion()
+    public async Task ExecuteAsync_WhenScheduleJobIsActive_CallsServiceWithCorrectParameters()
     {
         // Arrange
-        var emptyScheduleJobs = Array.Empty<ScheduleJob>();
-        var job = new CalculateBonusJob(_mockJobsSettings.Object, emptyScheduleJobs, _mockPromotionService.Object);
+        var scheduleJob = new ScheduleJob { Name = "CalculateBonusJob", IsActive = true };
+        _scheduleJobs = new ScheduleJob[] { scheduleJob };
+        var job = new CalculateBonusJob(_mockJobSettings.Object, _scheduleJobs, _mockCalculateBonusService.Object);
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockPromotionService.Verify(s => s.AddBonusTransaction(It.IsAny<bool>(), It.IsAny<int>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_NoBatchSizeParameter_UsesDefaultBatchSize()
-    {
-        // Arrange
-        var scheduleJobsWithoutBatchSize = new[]
-        {
-                new ScheduleJob
-                {
-                    Name = "CalculateBonusJob",
-                    IsActive = true,
-                    Parameters = Array.Empty<ScheduleJobParameter>()
-                }
-            };
-        var job = new CalculateBonusJob(_mockJobsSettings.Object, scheduleJobsWithoutBatchSize, _mockPromotionService.Object);
-
-        // Act
-        await job.ExecuteAsync();
-
-        // Assert
-        _mockPromotionService.Verify(s => s.AddBonusTransaction(false, 3000), Times.Once);
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_InvalidBatchSizeParameter_UsesDefaultBatchSize()
-    {
-        // Arrange
-        var scheduleJobsWithInvalidBatchSize = new[]
-        {
-                new ScheduleJob
-                {
-                    Name = "CalculateBonusJob",
-                    IsActive = true,
-                    Parameters = new[]
-                    {
-                        new ScheduleJobParameter { Key = "BatchSize", Value = "invalid" }
-                    }
-                }
-            };
-        var job = new CalculateBonusJob(_mockJobsSettings.Object, scheduleJobsWithInvalidBatchSize, _mockPromotionService.Object);
-
-        // Act
-        await job.ExecuteAsync();
-
-        // Assert
-        _mockPromotionService.Verify(s => s.AddBonusTransaction(false, 3000), Times.Once);
+        _mockCalculateBonusService.Verify(x => x.AddBonusTransaction(_jobsSettings.IsTest, scheduleJob), Times.Once);
     }
 }

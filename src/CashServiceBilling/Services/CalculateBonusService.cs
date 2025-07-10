@@ -2,24 +2,26 @@ using System.Text.Json;
 using CashServiceBilling.Criteria;
 using CashServiceBilling.Models;
 using Fanex.Data.Repository;
+using Shared.Configuration;
+using Shared.Services;
 
 namespace CashServiceBilling.Services;
 
 public interface ICalculateBonusService
 {
-    Task AddBonusTransaction(bool isTest, int size);
+    Task AddBonusTransaction(bool isTest, ScheduleJob scheduleJob);
 }
 
 public class CalculateBonusService : ICalculateBonusService
 {
     private const string JobName = "[Calculate Bonus]";
     private readonly IDynamicRepository repository;
-    private readonly Fanex.Logging.ILogger logger;
+    private readonly ILoggerService logger;
     private readonly IConfiguration configuration;
 
     public CalculateBonusService(
         IDynamicRepository repository,
-        Fanex.Logging.ILogger logger,
+        ILoggerService logger,
         IConfiguration configuration)
     {
         this.repository = repository;
@@ -27,33 +29,33 @@ public class CalculateBonusService : ICalculateBonusService
         this.configuration = configuration;
     }
 
-    public async Task AddBonusTransaction(bool isTest, int size)
+    public async Task AddBonusTransaction(bool isTest, ScheduleJob scheduleJob)
     {
         var category = configuration.GetValue<string>("JobsSettings:NotifyCategory");
-        await logger.ErrorAsync($"Start {JobName}.", category);
+        await logger.Notify($"Start {JobName}.", category);
 
-        var agentPromotionCount = 0;
-        var agentPromotionJson = await GetAgentSettingPromotion(isTest);
+        var agentPromotionsCount = 0;
+        var agentPromotionJson = await GetAgentPromotionJson(isTest);
 
         if (!string.IsNullOrWhiteSpace(agentPromotionJson))
         {
-            var agentPromotion = JsonSerializer.Deserialize<AgentSettingPromotion[]>(agentPromotionJson);
-            agentPromotionCount = agentPromotion?.Length ?? 0;
+            var agentPromotions = JsonSerializer.Deserialize<AgentPromotion[]>(agentPromotionJson);
+            agentPromotionsCount = agentPromotions?.Length ?? 0;
 
-            if (agentPromotionCount > 0)
+            if (agentPromotionsCount > 0)
             {
-                var tasks = agentPromotion.GroupBy(
+                var tasks = agentPromotions.GroupBy(
                     p => p.SiteDBGroupId,
-                    (key, group) => AddBonusTransaction(group, key, size));
+                    (key, group) => AddBonusTransaction(group, key, scheduleJob));
                 await Task.WhenAll(tasks);
             }
         }
 
-        await logger.ErrorAsync($"{JobName} Agent Setting Promotion Count: {agentPromotionCount}.", category);
-        await logger.ErrorAsync($"{JobName} completed.", category);
+        await logger.Notify($"{JobName} CashPromotions Count: {agentPromotionsCount}.", category);
+        await logger.Notify($"{JobName} completed.", category);
     }
 
-    public async Task<string> GetAgentSettingPromotion(bool isTest)
+    public async Task<string> GetAgentPromotionJson(bool isTest)
     {
         var criteria = new GetAgentSettingBonusCriteria(isTest);
         await repository.ExecuteAsync(criteria);
@@ -61,14 +63,32 @@ public class CalculateBonusService : ICalculateBonusService
         return criteria.AgentPromotion;
     }
 
-    public Task AddBonusTransaction(IEnumerable<AgentSettingPromotion> agentPromotion, short siteDBGroupId, int size)
+    public Task AddBonusTransaction(IEnumerable<AgentPromotion> agentPromotions, short siteDBGroupId, ScheduleJob scheduleJob)
     {
-        var agentPromotionBatches = agentPromotion.Chunk(size);
-        return Task.WhenAll(agentPromotionBatches.Select(batch => AddBonusTransaction(batch, siteDBGroupId)));
+        var batchSize = GetBatchSize(scheduleJob);
+        var agentPromotionBatches = agentPromotions.Chunk(batchSize);
+        return Task.WhenAll(agentPromotionBatches.Select(async batch =>
+        {
+            try
+            {
+                await repository.ExecuteAsync(new AddBonusTransactionCriteria(
+                    JsonSerializer.Serialize(batch),
+                    siteDBGroupId));
+            }
+            catch (Exception ex)
+            {
+                await logger.Error(ex, scheduleJob, nameof(AddBonusTransaction));
+            }
+        }));
     }
 
-    public Task AddBonusTransaction(IEnumerable<AgentSettingPromotion> agentPromotion, short siteDBGroupId)
-        => repository.ExecuteAsync(new AddBonusTransactionCriteria(
-            JsonSerializer.Serialize(agentPromotion),
-            siteDBGroupId));
+    private static int GetBatchSize(ScheduleJob scheduleJob)
+    {
+        var batchSizeParameter = scheduleJob.Parameters
+            .FirstOrDefault(p => p.Key.Equals("BatchSize", StringComparison.OrdinalIgnoreCase));
+
+        return batchSizeParameter != null && int.TryParse(batchSizeParameter.Value, out var batchSize)
+            ? batchSize
+            : 3000; // Default batch size
+    }
 }

@@ -30,12 +30,6 @@ public sealed class CalculateBonusJob
             return;
         }
 
-        var batchSizeParameter = scheduleJob.Parameters.FirstOrDefault(p => p.Key.Equals("BatchSize", StringComparison.OrdinalIgnoreCase));
-        if (batchSizeParameter == null || !int.TryParse(batchSizeParameter.Value, out var batchSize))
-        {
-            batchSize = 3000;
-        }
-
-        await calculateBonusService.AddBonusTransaction(jobsSettings.IsTest, batchSize);
+        await calculateBonusService.AddBonusTransaction(jobsSettings.IsTest, scheduleJob);
     }
 }
