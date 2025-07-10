@@ -29,7 +29,7 @@ public class InsertConcurrentUserCriteria : NonQueryCommand
 
     public string ErrorMsg { get; set; } = default!;
 
-    public string ErrCode { get; set; } = default!;
+    public int ErrCode { get; set; } = default!;
 
     public override string GetSettingKey()
         => $"Age_Rpt_ConcurrentOnlineUserDetail_Ins_{ServerName}";

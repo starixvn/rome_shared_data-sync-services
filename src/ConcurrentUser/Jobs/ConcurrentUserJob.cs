@@ -4,9 +4,6 @@ using ONEbook.UM.Services;
 using Shared.Configuration;
 using Shared.Jobs;
 using Shared.Services;
-using System.Linq;
-using System.Collections;
-using System.Diagnostics;
 
 namespace ConcurrentUser.Jobs;
 
@@ -52,11 +49,11 @@ public sealed class ConcurrentUserJob : BackgroundServiceBase
         {
             try
             {
-                var result = await service.InsertConcurrentUser(users, server);                
+                var result = await service.InsertConcurrentUser(users, server);
             }
             catch (Exception exception)
             {
-                loggerService.Error(exception, scheduleJob, "InsertConcurrentUser");
+                await loggerService.Error(exception, scheduleJob, "InsertConcurrentUser");
             }
         }
     }
