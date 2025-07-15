@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AutoTransfer.Models;
 using AutoTransfer.Services;
 using Microsoft.Extensions.Options;
@@ -64,11 +63,8 @@ public class BaseAutoTransferJob : BackgroundServiceBase
 
             if (!umInfo.IsUnderMaintenanceTime)
             {
-                ToJson("No UM");
                 break;
             }
-
-            Console.WriteLine(ToJson(umInfo));
 
             await Task.Delay(UMDelayCheckingTimeInMilliseconds, stoppingToken);
         }
@@ -99,6 +95,4 @@ public class BaseAutoTransferJob : BackgroundServiceBase
 
         return loggerService.Notify($"{scheduleJob.JobInfo}{siteDBName} {message}", settings.NotifyCategory);
     }
-
-    public static string ToJson(object value) => JsonSerializer.Serialize(value);
 }

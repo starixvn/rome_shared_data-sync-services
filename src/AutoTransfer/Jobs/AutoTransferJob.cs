@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AutoTransfer.Models;
 using AutoTransfer.Services;
 using Microsoft.Extensions.Options;
@@ -33,7 +32,6 @@ namespace AutoTransfer.Jobs
             var dt = DateTime.Now;
             var currentTime = new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0);
             var jobConfigModel = await transferService.GetJobConfigModel(settings.Environment);
-            Console.WriteLine($"jobConfigModel: {ToJson(jobConfigModel)}");
             if (!jobConfigModel.IsActive)
             {
                 return;
@@ -41,7 +39,6 @@ namespace AutoTransfer.Jobs
 
             var runningTime = jobConfigModel.GetRunningTime(currentTime);
             var isRunTime = IsRunTime(runningTime, currentTime);
-            Console.WriteLine($"runningTime: {ToJson(runningTime)}");
             if (!isRunTime)
             {
                 return;
@@ -50,7 +47,6 @@ namespace AutoTransfer.Jobs
             await WaitForSystemUM(stoppingToken);
             var runningMode = jobConfigModel.GetRunningMode(currentTime);
             var startModel = await transferService.Start(settings.PairOfBatch, runningMode, settings.Environment);
-            Console.WriteLine($"startModel: {ToJson(startModel)}");
             await loggerService.Error(new Exception($"{scheduleJob.JobInfo} start transferring."), scheduleJob, nameof(ExecuteInternal));
             var notifyStatus = await transferService.GetNotifyStatusModel();
             if (notifyStatus == null ||
@@ -93,7 +89,5 @@ namespace AutoTransfer.Jobs
 
         private Task ProcessBatch(BatchModel batch)
             => transferService.ProcessBatch(batch, settings.Environment);
-
-        public static string ToJson(object value) => JsonSerializer.Serialize(value);
     }
 }
