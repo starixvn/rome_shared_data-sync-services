@@ -12,6 +12,8 @@ public interface ILoggerService
 {
     Task Info(string message);
 
+    Task Error(string message);
+
     Task Error(Exception exception, ScheduleJob scheduleJob, string methodName, string message = "");
 
     void InfoConsole(string message, params object[] args);
@@ -29,6 +31,8 @@ public sealed class LoggerService : ILoggerService
         => (this.logger, this.loggerConsole) = (logger, loggerConsole);
 
     public Task Info(string message) => logger.InfoAsync(message);
+
+    public Task Error(string message) => logger.ErrorAsync(message);
 
     public Task Error(Exception exception, ScheduleJob scheduleJob, string methodName, string message = "")
         => logger.ErrorAsync(BuildError(exception, scheduleJob, methodName, message));

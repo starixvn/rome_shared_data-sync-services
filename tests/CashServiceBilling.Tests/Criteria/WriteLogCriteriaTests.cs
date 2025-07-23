@@ -1,6 +1,5 @@
 using CashServiceBilling.Criteria;
 using CashServiceBilling.Models;
-using Xunit;
 
 namespace CashServiceBilling.Tests.Criteria;
 

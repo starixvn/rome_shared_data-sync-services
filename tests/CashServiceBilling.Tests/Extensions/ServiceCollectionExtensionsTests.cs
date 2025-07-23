@@ -62,7 +62,6 @@ public class ServiceCollectionExtensionsTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
-                { "IsTest", "true" },
                 { "ScheduleJobs:0:IsActive", "true" },
                 { "ScheduleJobs:0:Name", "ActiveJob" },
                 { "ScheduleJobs:1:IsActive", "false" },
@@ -79,6 +78,6 @@ public class ServiceCollectionExtensionsTests
         Assert.NotNull(scheduleJobs);
         Assert.Single(scheduleJobs);
         Assert.Equal("ActiveJob", scheduleJobs[0].Name);
-        Assert.True(scheduleJobs[0].IsTest);
+        Assert.False(scheduleJobs[0].IsTest);
     }
 }
