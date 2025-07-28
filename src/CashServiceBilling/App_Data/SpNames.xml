@@ -22,7 +22,7 @@
   </Function>
   <Function Name="Calculate Bonus">
     <Setting Key="Task_CashService_AgentSetting_Sel" SpName="Task_CashService_AgentSetting_Sel" DbName="DBCUST.AgencyCashService.wsv_CashService" />
-    <Setting Key="Task_CashService_CashPromotionCal" SpName="Task_CashService_CashPromotionCal" DbName="DBAGE.bodb02.wsv_CashService" />
+    <Setting Key="Task_CashService_CashPromotionCal" SpName="Task_CashService_CashPromotionCal" DbName="DBAGE.bodb02.wsv_CashService" TimeOut="300" />
     <Setting Key="Task_CashService_BonusTransaction_Sel" SpName="Task_CashService_BonusTransaction_Sel" DbName="DBAGE.bodb02.wsv_CashService" />
     <Setting Key="SiteDB_3_Task_CashService_BonusTransaction_Ins" SpName="Task_CashService_BonusTransaction_Ins" DbName="DBSIC.bodb02.wsv_CashService" />
   </Function>

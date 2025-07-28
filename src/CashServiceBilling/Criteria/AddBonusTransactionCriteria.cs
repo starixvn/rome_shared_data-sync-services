@@ -14,6 +14,8 @@ public class AddBonusTransactionCriteria : NonQueryCommand
 
     public int SiteDBGroupId { get; }
 
+    public bool IsBonusChanged { get; set; }
+
     public override string GetSettingKey() => $"SiteDB_{SiteDBGroupId}_Task_CashService_BonusTransaction_Ins";
 
     public override bool IsValid() => !string.IsNullOrWhiteSpace(MemberBonus);
