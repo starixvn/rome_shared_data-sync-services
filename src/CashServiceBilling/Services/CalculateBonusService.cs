@@ -38,7 +38,7 @@ public class CalculateBonusService : ICalculateBonusService
             if (agentPromotionsCount > 0)
             {
                 await CalculateCashPromotionsFlow(agentPromotions, scheduleJob);
-                await AddBonusTransactionsFlow(jobsSettings.SiteDBGroupIds);
+                await AddBonusTransactionsFlow(jobsSettings);
             }
         }
         catch (Exception ex)
@@ -80,14 +80,16 @@ public class CalculateBonusService : ICalculateBonusService
         var reportDate = await reportDateTask;
         var batchSize = GetBatchSize(scheduleJob);
 
-        var tasks = agentPromotions.Chunk(batchSize).Select(p => CalculateCashPromotions(
-            productDetailsXml,
-            reportDate.MoveBetsDay,
-            reportDate.BalanceUpDay,
-            JsonSerializer.Serialize(p),
-            scheduleJob
-        ));
-        await Task.WhenAll(tasks);
+        var agentPromotionsInBatch = agentPromotions.Chunk(batchSize);
+        foreach (var item in agentPromotionsInBatch)
+        {
+            await CalculateCashPromotions(
+                productDetailsXml,
+                reportDate.MoveBetsDay,
+                reportDate.BalanceUpDay,
+                JsonSerializer.Serialize(item),
+                scheduleJob);
+        }
     }
 
     public async Task CalculateCashPromotions(
@@ -141,9 +143,11 @@ public class CalculateBonusService : ICalculateBonusService
         return xml.ToString();
     }
 
-    public async Task AddBonusTransactionsFlow(IEnumerable<int> siteDBGroupIds)
+    public async Task AddBonusTransactionsFlow(JobsSettingsModel jobsSettings)
     {
-        foreach (var siteDBGroupId in siteDBGroupIds)
+        var hasAnyBonusChanged = false;
+
+        foreach (var siteDBGroupId in jobsSettings.SiteDBGroupIds)
         {
             var maxCustId = 0;
             string memberBonus;
@@ -157,9 +161,19 @@ public class CalculateBonusService : ICalculateBonusService
                     break;
                 }
 
-                await AddBonusTransactions(memberBonus, siteDBGroupId);
+                var isBonusChanged = await AddBonusTransactions(memberBonus, siteDBGroupId, jobsSettings);
+                if (isBonusChanged)
+                {
+                    hasAnyBonusChanged = true;
+                }
+
                 await Task.Delay(100);
             }
+        }
+
+        if (hasAnyBonusChanged)
+        {
+            await logger.Notify("[ALERT] Bonus transaction amount mismatch detected (same CustId, TransactionTypeID, Date). Logged to CashTransactionError for review.", jobsSettings.NotifyCategory);
         }
     }
 
@@ -171,6 +185,11 @@ public class CalculateBonusService : ICalculateBonusService
         return (criteria.MaxCustId, criteria.MemberBonus);
     }
 
-    public Task AddBonusTransactions(string memberBonus, int siteDBGroupId)
-        => repository.ExecuteAsync(new AddBonusTransactionCriteria(memberBonus, siteDBGroupId));
+    public async Task<bool> AddBonusTransactions(string memberBonus, int siteDBGroupId, JobsSettingsModel jobsSettings)
+    {
+        var criteria = new AddBonusTransactionCriteria(memberBonus, siteDBGroupId);
+        await repository.ExecuteAsync(criteria);
+
+        return criteria.IsBonusChanged;
+    }
 }
