@@ -71,6 +71,16 @@ public class CalculateBonusService : ICalculateBonusService
         return (mondayLastWeek, sundayLastWeek);
     }
 
+    public static DateTime GetTuesdayLastWeek()
+    {
+        var today = DateTime.Today;
+        var daysToSubtract = (int)today.DayOfWeek - (int)DayOfWeek.Tuesday;
+
+        return daysToSubtract == 0
+            ? today
+            : today.AddDays(-daysToSubtract);
+    }
+
     public async Task CalculateCashPromotionsFlow(AgentPromotion[] agentPromotions, ScheduleJob scheduleJob)
     {
         var productDetailsXmlTask = GetProductDetailsXml();
@@ -146,6 +156,7 @@ public class CalculateBonusService : ICalculateBonusService
     public async Task AddBonusTransactionsFlow(JobsSettingsModel jobsSettings)
     {
         var hasAnyBonusChanged = false;
+        var transDate = GetTuesdayLastWeek();
 
         foreach (var siteDBGroupId in jobsSettings.SiteDBGroupIds)
         {
@@ -154,14 +165,14 @@ public class CalculateBonusService : ICalculateBonusService
 
             while (true)
             {
-                (maxCustId, memberBonus) = await GetBonusTransactions(siteDBGroupId, maxCustId);
+                (maxCustId, memberBonus) = await GetBonusTransactions(siteDBGroupId, maxCustId, transDate);
 
                 if (string.IsNullOrWhiteSpace(memberBonus))
                 {
                     break;
                 }
 
-                var isBonusChanged = await AddBonusTransactions(memberBonus, siteDBGroupId, jobsSettings);
+                var isBonusChanged = await AddBonusTransactions(memberBonus, siteDBGroupId);
                 if (isBonusChanged)
                 {
                     hasAnyBonusChanged = true;
@@ -177,15 +188,15 @@ public class CalculateBonusService : ICalculateBonusService
         }
     }
 
-    public async Task<(int, string)> GetBonusTransactions(int siteDBGroupId, int maxCustId)
+    public async Task<(int, string)> GetBonusTransactions(int siteDBGroupId, int maxCustId, DateTime transDate)
     {
-        var criteria = new GetBonusTransactionCriteria(siteDBGroupId, maxCustId);
+        var criteria = new GetBonusTransactionCriteria(siteDBGroupId, maxCustId, transDate);
         await repository.ExecuteAsync(criteria);
 
         return (criteria.MaxCustId, criteria.MemberBonus);
     }
 
-    public async Task<bool> AddBonusTransactions(string memberBonus, int siteDBGroupId, JobsSettingsModel jobsSettings)
+    public async Task<bool> AddBonusTransactions(string memberBonus, int siteDBGroupId)
     {
         var criteria = new AddBonusTransactionCriteria(memberBonus, siteDBGroupId);
         await repository.ExecuteAsync(criteria);
