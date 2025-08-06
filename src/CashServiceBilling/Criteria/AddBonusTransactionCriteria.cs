@@ -4,15 +4,18 @@ namespace CashServiceBilling.Criteria;
 
 public class AddBonusTransactionCriteria : NonQueryCommand
 {
-    public AddBonusTransactionCriteria(string memberBonus, int siteDBGroupId)
+    public AddBonusTransactionCriteria(string memberBonus, int siteDBGroupId, DateTime transDate)
     {
         MemberBonus = memberBonus;
         SiteDBGroupId = siteDBGroupId;
+        TransDate = transDate;
     }
 
     public string MemberBonus { get; }
 
     public int SiteDBGroupId { get; }
+
+    public DateTime TransDate { get; }
 
     public bool IsBonusChanged { get; set; }
 

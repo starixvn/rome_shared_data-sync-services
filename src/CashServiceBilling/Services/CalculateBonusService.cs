@@ -89,6 +89,7 @@ public class CalculateBonusService : ICalculateBonusService
         var productDetailsXml = await productDetailsXmlTask;
         var reportDate = await reportDateTask;
         var batchSize = GetBatchSize(scheduleJob);
+        var transDate = GetTuesdayLastWeek();
 
         var agentPromotionsInBatch = agentPromotions.Chunk(batchSize);
         foreach (var item in agentPromotionsInBatch)
@@ -98,6 +99,7 @@ public class CalculateBonusService : ICalculateBonusService
                 reportDate.MoveBetsDay,
                 reportDate.BalanceUpDay,
                 JsonSerializer.Serialize(item),
+                transDate,
                 scheduleJob);
         }
     }
@@ -107,6 +109,7 @@ public class CalculateBonusService : ICalculateBonusService
         DateTime moveBetsDay,
         DateTime balanceUpDay,
         string agentPromotion,
+        DateTime transDate,
         ScheduleJob scheduleJob)
     {
         try
@@ -115,7 +118,8 @@ public class CalculateBonusService : ICalculateBonusService
                 productDetailsXml,
                 moveBetsDay,
                 balanceUpDay,
-                agentPromotion));
+                agentPromotion,
+                transDate));
         }
         catch (Exception ex)
         {
@@ -172,7 +176,7 @@ public class CalculateBonusService : ICalculateBonusService
                     break;
                 }
 
-                var isBonusChanged = await AddBonusTransactions(memberBonus, siteDBGroupId);
+                var isBonusChanged = await AddBonusTransactions(memberBonus, siteDBGroupId, transDate);
                 if (isBonusChanged)
                 {
                     hasAnyBonusChanged = true;
@@ -196,9 +200,9 @@ public class CalculateBonusService : ICalculateBonusService
         return (criteria.MaxCustId, criteria.MemberBonus);
     }
 
-    public async Task<bool> AddBonusTransactions(string memberBonus, int siteDBGroupId)
+    public async Task<bool> AddBonusTransactions(string memberBonus, int siteDBGroupId, DateTime transDate)
     {
-        var criteria = new AddBonusTransactionCriteria(memberBonus, siteDBGroupId);
+        var criteria = new AddBonusTransactionCriteria(memberBonus, siteDBGroupId, transDate);
         await repository.ExecuteAsync(criteria);
 
         return criteria.IsBonusChanged;

@@ -35,7 +35,9 @@ public static class ServiceCollectionExtensions
             .AddSingleton<ITransactionService, TransactionService>()
             .AddHostedService<UpdateTransExpiredStatusJob>()
             .AddSingleton<ICalculateBonusService, CalculateBonusService>()
-            .AddSingleton<CalculateBonusJob>();
+            .AddSingleton<CalculateBonusJob>()
+            .AddSingleton<IPromotionService, PromotionService>()
+            .AddSingleton<UpdatePromotionExpiredStatusJob>();
     }
 
     public static IApplicationBuilder AddJobs(this IApplicationBuilder app)
@@ -54,6 +56,13 @@ public static class ServiceCollectionExtensions
             "Calculate-Bonus",
             () => calculateBonusJob.ExecuteAsync(),
             calculateBonusJob.Cron,
+            jobOptions);
+
+        var updatePromotionExpiredStatusJob = app.ApplicationServices.GetRequiredService<UpdatePromotionExpiredStatusJob>();
+        RecurringJob.AddOrUpdate(
+            "Update-Promotion-Expired-Status",
+            () => updatePromotionExpiredStatusJob.ExecuteAsync(),
+            updatePromotionExpiredStatusJob.Cron,
             jobOptions);
 
         return app;

@@ -234,11 +234,9 @@ namespace CashServiceBilling.Services.Tests
         }
 
         [Fact]
-        public async Task AddBonusTransactions_WhenBonusChanged_ShouldNotifyAlert()
+        public async Task AddBonusTransactions_ReturnsCorrectBonusChanged()
         {
             // Arrange
-            var jobSettings = new JobsSettingsModel { NotifyCategory = "Test" };
-
             _mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
                 .Callback<INonQueryCommand>(criteria =>
                 {
@@ -247,13 +245,10 @@ namespace CashServiceBilling.Services.Tests
                 });
 
             // Act
-            await _service.AddBonusTransactions("test bonus", 1, jobSettings);
+            var result = await _service.AddBonusTransactions("test bonus", 1);
 
             // Assert
-            _mockLogger.Verify(l => l.Notify(
-                "[ALERT] Bonus transaction amount mismatch detected (same CustId, TransactionTypeID, Date). Logged to CashTransactionError for review.",
-                jobSettings.NotifyCategory),
-                Times.Once);
+            Assert.True(result);
         }
     }
 }
