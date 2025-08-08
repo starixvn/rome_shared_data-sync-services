@@ -15,7 +15,7 @@
     <Setting Key="Task_CashService_AccumCreditReturn_YesterdayLoss_Adjust" SpName="Task_CashService_AccumCreditReturn_YesterdayLoss_Adjust" DbName="DBSIC.bodb02.wsv_CashService" />
     <Setting Key="CustDB_0_Age_CashAccumCredit_SyncData" SpName="Age_CashAccumCredit_SyncData" DbName="DBCUST.CustDB.wsv_CashService" />
     <Setting Key="WriteLog_CashService_UserLog_RunSP" SpName="WriteLog_CashService_UserLog_RunSP" DbName="DBLOG.bodb_CustomerLog.wsv_CashService" />
-    <Setting Key="CustDB_0_WriteLog_CashService_UserLog_RunSP" SpName="WriteLog_CashService_UserLog_RunSP" DbName="DBCUST.CustDB.wsv_CashService" />
+    <Setting Key="CustDB_0_WriteLog_CashService_UserLog_RunSP" SpName="WriteLog_CashService_UserLog_RunSP" DbName="DBCUST.bodb_CustomerLog.wsv_CashService" />
   </Function>
   <Function Name="Update Transaction Expired Status">
       <Setting Key="Task_CashService_UpdateExpiredStatus" SpName="Task_CashService_UpdateExpiredStatus" DbName="DBSIC.bodb02.wsv_CashService" />

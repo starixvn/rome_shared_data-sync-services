@@ -18,11 +18,16 @@ public class CalculateBonusService : ICalculateBonusService
     private const string JobName = "[Calculate Bonus]";
     private readonly IDynamicRepository repository;
     private readonly ILoggerService logger;
+    private readonly ITransactionLogService transactionLogService;
 
-    public CalculateBonusService(IDynamicRepository repository, ILoggerService logger)
+    public CalculateBonusService(
+        IDynamicRepository repository,
+        ILoggerService logger,
+        ITransactionLogService transactionLogService)
     {
         this.repository = repository;
         this.logger = logger;
+        this.transactionLogService = transactionLogService;
     }
 
     public async Task CalculateAndAddBonusTransactions(JobsSettingsModel jobsSettings, ScheduleJob scheduleJob)
@@ -176,7 +181,7 @@ public class CalculateBonusService : ICalculateBonusService
                     break;
                 }
 
-                var isBonusChanged = await AddBonusTransactions(memberBonus, siteDBGroupId, transDate);
+                var isBonusChanged = await AddBonusTransactionsAndWriteLog(memberBonus, siteDBGroupId, transDate);
                 if (isBonusChanged)
                 {
                     hasAnyBonusChanged = true;
@@ -200,10 +205,12 @@ public class CalculateBonusService : ICalculateBonusService
         return (criteria.MaxCustId, criteria.MemberBonus);
     }
 
-    public async Task<bool> AddBonusTransactions(string memberBonus, int siteDBGroupId, DateTime transDate)
+    public async Task<bool> AddBonusTransactionsAndWriteLog(string memberBonus, int siteDBGroupId, DateTime transDate)
     {
         var criteria = new AddBonusTransactionCriteria(memberBonus, siteDBGroupId, transDate);
         await repository.ExecuteAsync(criteria);
+
+        await transactionLogService.WriteLog(criteria.LogJson, (short)siteDBGroupId);
 
         return criteria.IsBonusChanged;
     }

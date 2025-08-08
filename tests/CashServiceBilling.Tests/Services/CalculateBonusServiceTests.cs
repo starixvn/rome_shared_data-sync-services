@@ -12,13 +12,15 @@ namespace CashServiceBilling.Services.Tests
     {
         private readonly Mock<IDynamicRepository> _mockRepository;
         private readonly Mock<ILoggerService> _mockLogger;
+        private readonly Mock<ITransactionLogService> _mockTransactionLogService;
         private readonly CalculateBonusService _service;
 
         public CalculateBonusServiceTests()
         {
             _mockRepository = new Mock<IDynamicRepository>();
             _mockLogger = new Mock<ILoggerService>();
-            _service = new CalculateBonusService(_mockRepository.Object, _mockLogger.Object);
+            _mockTransactionLogService = new Mock<ITransactionLogService>();
+            _service = new CalculateBonusService(_mockRepository.Object, _mockLogger.Object, _mockTransactionLogService.Object);
         }
 
         [Fact]
@@ -245,7 +247,7 @@ namespace CashServiceBilling.Services.Tests
                 });
 
             // Act
-            var result = await _service.AddBonusTransactions("test bonus", 1);
+            var result = await _service.AddBonusTransactionsAndWriteLog("test bonus", 1, DateTime.Today);
 
             // Assert
             Assert.True(result);

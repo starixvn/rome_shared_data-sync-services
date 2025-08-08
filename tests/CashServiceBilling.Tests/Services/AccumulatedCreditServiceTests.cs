@@ -145,7 +145,7 @@ public class AccumulatedCreditServiceTests
         // Assert
         _repositoryMock.Verify(r => r.FetchAsync<LogEntry>(It.IsAny<AddManualDepositTransCriteria>()), Times.Once);
         _repositoryMock.Verify(r => r.ExecuteAsync(It.IsAny<SyncCashAccumCreditCriteria>()), Times.Once);
-        _transactionLogServiceMock.Verify(t => t.WriteLogs(logs), Times.Once);
+        _transactionLogServiceMock.Verify(t => t.WriteLogs(logs, 500), Times.Once);
     }
 
     [Fact]

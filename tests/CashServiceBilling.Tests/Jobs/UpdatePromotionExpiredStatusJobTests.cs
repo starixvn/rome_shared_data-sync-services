@@ -12,19 +12,31 @@ public class UpdatePromotionExpiredStatusJobTests
     private readonly Mock<IOptions<JobsSettingsModel>> _mockJobsSettings;
     private readonly Mock<IPromotionService> _mockPromotionService;
     private readonly JobsSettingsModel _jobsSettings;
-    private readonly ScheduleJob[] _scheduleJobs;
+    private readonly ScheduleJob _activeScheduleJob;
+    private readonly ScheduleJob _inactiveScheduleJob;
 
     public UpdatePromotionExpiredStatusJobTests()
     {
-        _jobsSettings = new JobsSettingsModel { UpdatePromotionExpiredStatusJobCron = "0 0 * * *" };
+        _jobsSettings = new JobsSettingsModel
+        {
+            UpdatePromotionExpiredStatusJobCron = "0 0 * * *"
+        };
+
         _mockJobsSettings = new Mock<IOptions<JobsSettingsModel>>();
         _mockJobsSettings.Setup(x => x.Value).Returns(_jobsSettings);
 
         _mockPromotionService = new Mock<IPromotionService>();
 
-        _scheduleJobs = new ScheduleJob[]
+        _activeScheduleJob = new ScheduleJob
         {
-                new ScheduleJob { Name = nameof(UpdatePromotionExpiredStatusJob), IsActive = true }
+            Name = nameof(UpdatePromotionExpiredStatusJob),
+            IsActive = true
+        };
+
+        _inactiveScheduleJob = new ScheduleJob
+        {
+            Name = nameof(UpdatePromotionExpiredStatusJob),
+            IsActive = false
         };
     }
 
@@ -32,7 +44,10 @@ public class UpdatePromotionExpiredStatusJobTests
     public void Cron_ReturnsCorrectValue()
     {
         // Arrange
-        var job = new UpdatePromotionExpiredStatusJob(_mockJobsSettings.Object, _scheduleJobs, _mockPromotionService.Object);
+        var job = new UpdatePromotionExpiredStatusJob(
+            _mockJobsSettings.Object,
+            new[] { _activeScheduleJob },
+            _mockPromotionService.Object);
 
         // Act
         var result = job.Cron;
@@ -42,51 +57,61 @@ public class UpdatePromotionExpiredStatusJobTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenScheduleJobIsActive_CallsUpdateExpiredStatus()
+    public async Task ExecuteAsync_WithActiveJob_CallsUpdateExpiredStatus()
     {
         // Arrange
-        var job = new UpdatePromotionExpiredStatusJob(_mockJobsSettings.Object, _scheduleJobs, _mockPromotionService.Object);
+        var job = new UpdatePromotionExpiredStatusJob(
+            _mockJobsSettings.Object,
+            new[] { _activeScheduleJob },
+            _mockPromotionService.Object);
+
+        _mockPromotionService
+            .Setup(x => x.UpdateExpiredStatus(_jobsSettings, _activeScheduleJob))
+            .Returns(Task.CompletedTask)
+            .Verifiable();
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockPromotionService.Verify(x => x.UpdateExpiredStatus(_jobsSettings), Times.Once);
+        _mockPromotionService.Verify();
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenScheduleJobIsNotActive_DoesNotCallUpdateExpiredStatus()
+    public async Task ExecuteAsync_WithInactiveJob_DoesNotCallUpdateExpiredStatus()
     {
         // Arrange
-        var inactiveScheduleJobs = new ScheduleJob[]
-        {
-                new ScheduleJob { Name = nameof(UpdatePromotionExpiredStatusJob), IsActive = false }
-        };
-
-        var job = new UpdatePromotionExpiredStatusJob(_mockJobsSettings.Object, inactiveScheduleJobs, _mockPromotionService.Object);
+        var job = new UpdatePromotionExpiredStatusJob(
+            _mockJobsSettings.Object,
+            new[] { _inactiveScheduleJob },
+            _mockPromotionService.Object);
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockPromotionService.Verify(x => x.UpdateExpiredStatus(It.IsAny<JobsSettingsModel>()), Times.Never);
+        _mockPromotionService.Verify(x => x.UpdateExpiredStatus(It.IsAny<JobsSettingsModel>(), It.IsAny<ScheduleJob>()), Times.Never);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenScheduleJobIsNull_DoesNotCallUpdateExpiredStatus()
+    public async Task ExecuteAsync_WithNoMatchingJob_DoesNotCallUpdateExpiredStatus()
     {
         // Arrange
-        var nullScheduleJobs = new ScheduleJob[]
+        var wrongNamedJob = new ScheduleJob
         {
-                new ScheduleJob { Name = "DifferentJobName", IsActive = true }
+            Name = "WrongName",
+            IsActive = true
         };
 
-        var job = new UpdatePromotionExpiredStatusJob(_mockJobsSettings.Object, nullScheduleJobs, _mockPromotionService.Object);
+        var job = new UpdatePromotionExpiredStatusJob(
+            _mockJobsSettings.Object,
+            new[] { wrongNamedJob },
+            _mockPromotionService.Object);
 
         // Act
         await job.ExecuteAsync();
 
         // Assert
-        _mockPromotionService.Verify(x => x.UpdateExpiredStatus(It.IsAny<JobsSettingsModel>()), Times.Never);
+        _mockPromotionService.Verify(x => x.UpdateExpiredStatus(It.IsAny<JobsSettingsModel>(), It.IsAny<ScheduleJob>()), Times.Never);
     }
 }

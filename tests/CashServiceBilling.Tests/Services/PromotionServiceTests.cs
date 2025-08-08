@@ -1,52 +1,55 @@
-using System.ComponentModel.DataAnnotations;
 using CashServiceBilling.Criteria;
 using CashServiceBilling.Models;
 using CashServiceBilling.Services;
 using Fanex.Data.Repository;
 using Moq;
+using Shared.Configuration;
 using Shared.Services;
 
 namespace CashServiceBilling.Tests.Services;
 
-public class PromotionServiceTests
+public class PromotionServiceTest
 {
-    private readonly Mock<IDynamicRepository> mockRepository;
-    private readonly Mock<ITransactionLogService> mockTransactionLogService;
-    private readonly Mock<ILoggerService> mockLogger;
+    private readonly Mock<IDynamicRepository> repositoryMock;
+    private readonly Mock<ITransactionLogService> transactionLogServiceMock;
+    private readonly Mock<ILoggerService> loggerMock;
     private readonly PromotionService promotionService;
     private readonly JobsSettingsModel jobsSettings;
+    private readonly ScheduleJob scheduleJob;
 
-    public PromotionServiceTests()
+    public PromotionServiceTest()
     {
-        mockRepository = new Mock<IDynamicRepository>();
-        mockTransactionLogService = new Mock<ITransactionLogService>();
-        mockLogger = new Mock<ILoggerService>();
+        repositoryMock = new Mock<IDynamicRepository>();
+        transactionLogServiceMock = new Mock<ITransactionLogService>();
+        loggerMock = new Mock<ILoggerService>();
 
         promotionService = new PromotionService(
-            mockRepository.Object,
-            mockTransactionLogService.Object,
-            mockLogger.Object);
+            repositoryMock.Object,
+            transactionLogServiceMock.Object,
+            loggerMock.Object);
 
         jobsSettings = new JobsSettingsModel
         {
             IsTest = false,
             NotifyCategory = "TestCategory"
         };
+
+        scheduleJob = new ScheduleJob();
     }
 
     [Fact]
     public async Task UpdateExpiredStatus_ShouldNotifyStartAndCompletion()
     {
         // Arrange
-        mockRepository.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<UpdatePromotionExpiredStatusCriteria>()))
+        repositoryMock.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<UpdatePromotionExpiredStatusCriteria>()))
             .ReturnsAsync(new List<LogEntry>());
 
         // Act
-        await promotionService.UpdateExpiredStatus(jobsSettings);
+        await promotionService.UpdateExpiredStatus(jobsSettings, scheduleJob);
 
         // Assert
-        mockLogger.Verify(l => l.Notify("Start [Update Promotion Expired Status].", jobsSettings.NotifyCategory), Times.Once);
-        mockLogger.Verify(l => l.Notify("[Update Promotion Expired Status] completed.", jobsSettings.NotifyCategory), Times.Once);
+        loggerMock.Verify(l => l.Notify("[Update Promotion Expired Status] completed.", jobsSettings.NotifyCategory), Times.Once);
+        loggerMock.Verify(l => l.Notify("Start [Update Promotion Expired Status].", jobsSettings.NotifyCategory), Times.Once);
     }
 
     [Fact]
@@ -54,47 +57,65 @@ public class PromotionServiceTests
     {
         // Arrange
         var logs = new List<LogEntry> { new LogEntry(), new LogEntry() };
-        mockRepository.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<UpdatePromotionExpiredStatusCriteria>()))
+
+        repositoryMock.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<UpdatePromotionExpiredStatusCriteria>()))
             .ReturnsAsync(logs);
 
         // Act
-        await promotionService.UpdateExpiredStatus(jobsSettings);
+        await promotionService.UpdateExpiredStatus(jobsSettings, scheduleJob);
 
         // Assert
-        mockTransactionLogService.Verify(t => t.WriteLogs(logs), Times.Once);
+        transactionLogServiceMock.Verify(t => t.WriteLogs(logs, 500), Times.Once);
     }
 
     [Fact]
     public async Task UpdateExpiredStatus_WhenNoLogs_ShouldNotWriteLogs()
     {
         // Arrange
-        mockRepository.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<UpdatePromotionExpiredStatusCriteria>()))
+        repositoryMock.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<UpdatePromotionExpiredStatusCriteria>()))
             .ReturnsAsync(new List<LogEntry>());
 
         // Act
-        await promotionService.UpdateExpiredStatus(jobsSettings);
+        await promotionService.UpdateExpiredStatus(jobsSettings, scheduleJob);
 
         // Assert
-        mockTransactionLogService.Verify(t => t.WriteLogs(It.IsAny<IEnumerable<LogEntry>>()), Times.Never);
+        transactionLogServiceMock.Verify(t => t.WriteLogs(It.IsAny<IEnumerable<LogEntry>>(), 500), Times.Never);
     }
 
     [Fact]
-    public async Task UpdateExpiredStatus_ShouldPassCorrectIsTestValueToCriteria()
+    public async Task UpdateExpiredStatus_WhenExceptionThrown_ShouldLogError()
+    {
+        // Arrange
+        var exception = new Exception("Test exception");
+
+        repositoryMock.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<UpdatePromotionExpiredStatusCriteria>()))
+            .ThrowsAsync(exception);
+
+        // Act
+        await promotionService.UpdateExpiredStatus(jobsSettings, scheduleJob);
+
+        // Assert
+        loggerMock.Verify(l => l.Error(exception, scheduleJob, nameof(PromotionService.UpdateExpiredStatus), string.Empty), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateExpiredStatus_ShouldUseCorrectCriteriaWithTestFlag()
     {
         // Arrange
         jobsSettings.IsTest = true;
-        mockRepository.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<ICriteria>()))
+
+        repositoryMock.Setup(r => r.FetchAsync<LogEntry>(It.IsAny<ICriteria>()))
             .ReturnsAsync(new List<LogEntry>())
             .Callback<ICriteria>(criteria =>
             {
                 var c = criteria as UpdatePromotionExpiredStatusCriteria;
-                Assert.Equal(jobsSettings.IsTest, c.IsTest);
+                Assert.True(c.IsTest);
             });
 
         // Act
-        await promotionService.UpdateExpiredStatus(jobsSettings);
+        await promotionService.UpdateExpiredStatus(jobsSettings, scheduleJob);
 
         // Assert
-        mockRepository.Verify(r => r.FetchAsync<LogEntry>(It.IsAny<UpdatePromotionExpiredStatusCriteria>()), Times.Once);
+        repositoryMock.Verify(r => r.FetchAsync<LogEntry>(It.Is<UpdatePromotionExpiredStatusCriteria>(c => c.IsTest == true)), Times.Once);
     }
 }
