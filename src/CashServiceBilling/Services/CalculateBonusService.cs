@@ -18,11 +18,16 @@ public class CalculateBonusService : ICalculateBonusService
     private const string JobName = "[Calculate Bonus]";
     private readonly IDynamicRepository repository;
     private readonly ILoggerService logger;
+    private readonly ITransactionLogService transactionLogService;
 
-    public CalculateBonusService(IDynamicRepository repository, ILoggerService logger)
+    public CalculateBonusService(
+        IDynamicRepository repository,
+        ILoggerService logger,
+        ITransactionLogService transactionLogService)
     {
         this.repository = repository;
         this.logger = logger;
+        this.transactionLogService = transactionLogService;
     }
 
     public async Task CalculateAndAddBonusTransactions(JobsSettingsModel jobsSettings, ScheduleJob scheduleJob)
@@ -71,6 +76,16 @@ public class CalculateBonusService : ICalculateBonusService
         return (mondayLastWeek, sundayLastWeek);
     }
 
+    public static DateTime GetTuesdayLastWeek()
+    {
+        var today = DateTime.Today;
+        var daysToSubtract = (int)today.DayOfWeek - (int)DayOfWeek.Tuesday;
+
+        return daysToSubtract == 0
+            ? today
+            : today.AddDays(-daysToSubtract);
+    }
+
     public async Task CalculateCashPromotionsFlow(AgentPromotion[] agentPromotions, ScheduleJob scheduleJob)
     {
         var productDetailsXmlTask = GetProductDetailsXml();
@@ -79,6 +94,7 @@ public class CalculateBonusService : ICalculateBonusService
         var productDetailsXml = await productDetailsXmlTask;
         var reportDate = await reportDateTask;
         var batchSize = GetBatchSize(scheduleJob);
+        var transDate = GetTuesdayLastWeek();
 
         var agentPromotionsInBatch = agentPromotions.Chunk(batchSize);
         foreach (var item in agentPromotionsInBatch)
@@ -88,6 +104,7 @@ public class CalculateBonusService : ICalculateBonusService
                 reportDate.MoveBetsDay,
                 reportDate.BalanceUpDay,
                 JsonSerializer.Serialize(item),
+                transDate,
                 scheduleJob);
         }
     }
@@ -97,6 +114,7 @@ public class CalculateBonusService : ICalculateBonusService
         DateTime moveBetsDay,
         DateTime balanceUpDay,
         string agentPromotion,
+        DateTime transDate,
         ScheduleJob scheduleJob)
     {
         try
@@ -105,7 +123,8 @@ public class CalculateBonusService : ICalculateBonusService
                 productDetailsXml,
                 moveBetsDay,
                 balanceUpDay,
-                agentPromotion));
+                agentPromotion,
+                transDate));
         }
         catch (Exception ex)
         {
@@ -146,6 +165,7 @@ public class CalculateBonusService : ICalculateBonusService
     public async Task AddBonusTransactionsFlow(JobsSettingsModel jobsSettings)
     {
         var hasAnyBonusChanged = false;
+        var transDate = GetTuesdayLastWeek();
 
         foreach (var siteDBGroupId in jobsSettings.SiteDBGroupIds)
         {
@@ -154,14 +174,14 @@ public class CalculateBonusService : ICalculateBonusService
 
             while (true)
             {
-                (maxCustId, memberBonus) = await GetBonusTransactions(siteDBGroupId, maxCustId);
+                (maxCustId, memberBonus) = await GetBonusTransactions(siteDBGroupId, maxCustId, transDate);
 
                 if (string.IsNullOrWhiteSpace(memberBonus))
                 {
                     break;
                 }
 
-                var isBonusChanged = await AddBonusTransactions(memberBonus, siteDBGroupId, jobsSettings);
+                var isBonusChanged = await AddBonusTransactionsAndWriteLog(memberBonus, siteDBGroupId, transDate);
                 if (isBonusChanged)
                 {
                     hasAnyBonusChanged = true;
@@ -177,18 +197,20 @@ public class CalculateBonusService : ICalculateBonusService
         }
     }
 
-    public async Task<(int, string)> GetBonusTransactions(int siteDBGroupId, int maxCustId)
+    public async Task<(int, string)> GetBonusTransactions(int siteDBGroupId, int maxCustId, DateTime transDate)
     {
-        var criteria = new GetBonusTransactionCriteria(siteDBGroupId, maxCustId);
+        var criteria = new GetBonusTransactionCriteria(siteDBGroupId, maxCustId, transDate);
         await repository.ExecuteAsync(criteria);
 
         return (criteria.MaxCustId, criteria.MemberBonus);
     }
 
-    public async Task<bool> AddBonusTransactions(string memberBonus, int siteDBGroupId, JobsSettingsModel jobsSettings)
+    public async Task<bool> AddBonusTransactionsAndWriteLog(string memberBonus, int siteDBGroupId, DateTime transDate)
     {
-        var criteria = new AddBonusTransactionCriteria(memberBonus, siteDBGroupId);
+        var criteria = new AddBonusTransactionCriteria(memberBonus, siteDBGroupId, transDate);
         await repository.ExecuteAsync(criteria);
+
+        await transactionLogService.WriteLog(criteria.LogJson, (short)siteDBGroupId);
 
         return criteria.IsBonusChanged;
     }

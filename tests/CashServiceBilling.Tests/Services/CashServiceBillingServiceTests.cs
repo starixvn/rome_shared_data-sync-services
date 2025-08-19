@@ -1,13 +1,9 @@
-using Xunit;
 using Moq;
 using Fanex.Data.Repository;
 using Fanex.Logging;
 using CashServiceBilling.Services;
 using CashServiceBilling.Models;
 using CashServiceBilling.Criteria;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace CashServiceBilling.Tests.Services;
 
@@ -73,7 +69,7 @@ public class CashServiceBillingServiceTests
             .Callback((ICriteria c) =>
             {
                 var sc = c as StartJobCriteria;
-                sc.ErrCode = 0; // Simulate no error 
+                sc.ErrCode = 0; // Simulate no error
                 sc.ErrMsg = "Success"; // Simulate success message
             })
             .ReturnsAsync(logs);

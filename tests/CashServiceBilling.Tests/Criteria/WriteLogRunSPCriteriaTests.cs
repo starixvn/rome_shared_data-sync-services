@@ -5,79 +5,91 @@ namespace CashServiceBilling.Tests.Criteria;
 public class WriteLogRunSPCriteriaTests
 {
     [Fact]
-    public void Constructor_ShouldSetPropertiesCorrectly()
+    public void Constructor_ShouldSetProperties_WhenCalled()
     {
         // Arrange
-        int userId = 123;
-        int custId = 456;
-        int actionId = 789;
-        string trackingValueMask = "mask1";
-        string trackingValueMask2 = "mask2";
-        string trackingValue = "value1";
-        string trackingValue2 = "value2";
-        short custDBGroupId = 10;
+        var logData = "log data";
+        short custDBGroupId = 1;
 
         // Act
-        var criteria = new WriteLogRunSPCriteria(
-            userId,
-            custId,
-            actionId,
-            trackingValueMask,
-            trackingValueMask2,
-            trackingValue,
-            trackingValue2,
-            custDBGroupId);
+        var criteria = new WriteLogRunSPCriteria(logData) { CustDBGroupId = custDBGroupId };
 
         // Assert
-        Assert.Equal(userId, criteria.UserId);
-        Assert.Equal(custId, criteria.CustId);
-        Assert.Equal(actionId, criteria.ActionId);
-        Assert.Equal(trackingValueMask, criteria.TrackingValueMask);
-        Assert.Equal(trackingValueMask2, criteria.TrackingValueMask2);
-        Assert.Equal(trackingValue, criteria.TrackingValue);
-        Assert.Equal(trackingValue2, criteria.TrackingValue2);
+        Assert.Equal(logData, criteria.LogData_Multiple);
         Assert.Equal(custDBGroupId, criteria.CustDBGroupId);
     }
 
     [Fact]
-    public void GetSettingKey_WithCustDBGroupId_ShouldReturnCustomKey()
+    public void Constructor_ShouldSetNullCustDBGroupId_WhenNotProvided()
     {
         // Arrange
-        var criteria = new WriteLogRunSPCriteria(1, 1, 1, "", "", "", "", 5);
+        var logData = "log data";
 
         // Act
-        string settingKey = criteria.GetSettingKey();
+        var criteria = new WriteLogRunSPCriteria(logData);
 
         // Assert
-        Assert.Equal("CustDB_5_WriteLog_CashService_UserLog_RunSP", settingKey);
+        Assert.Equal(logData, criteria.LogData_Multiple);
+        Assert.Null(criteria.CustDBGroupId);
     }
 
     [Fact]
-    public void GetSettingKey_WithoutCustDBGroupId_ShouldReturnDefaultKey()
+    public void GetSettingKey_ShouldReturnCorrectKey_WhenCustDBGroupIdHasValue()
     {
         // Arrange
-        var criteria = new WriteLogRunSPCriteria(1, 1, 1, "", "", "", "", null);
+        var criteria = new WriteLogRunSPCriteria("log data")
+        {
+            CustDBGroupId = 1
+        };
+        var expectedKey = "CustDB_1_WriteLog_CashService_UserLog_RunSP";
 
         // Act
-        string settingKey = criteria.GetSettingKey();
+        var result = criteria.GetSettingKey();
 
         // Assert
-        Assert.Equal("WriteLog_CashService_UserLog_RunSP", settingKey);
+        Assert.Equal(expectedKey, result);
+    }
+
+    [Fact]
+    public void GetSettingKey_ShouldReturnDefaultKey_WhenCustDBGroupIdIsNull()
+    {
+        // Arrange
+        var criteria = new WriteLogRunSPCriteria("log data");
+        var expectedKey = "WriteLog_CashService_UserLog_RunSP";
+
+        // Act
+        var result = criteria.GetSettingKey();
+
+        // Assert
+        Assert.Equal(expectedKey, result);
+    }
+
+    [Fact]
+    public void IsValid_ShouldReturnTrue_WhenLogDataIsProvided()
+    {
+        // Arrange
+        var criteria = new WriteLogRunSPCriteria("log data");
+
+        // Act
+        var result = criteria.IsValid();
+
+        // Assert
+        Assert.True(result);
     }
 
     [Theory]
-    [InlineData(1, true)]
-    [InlineData(0, false)]
-    [InlineData(-1, false)]
-    public void IsValid_ShouldReturnExpectedResult(int custId, bool expectedResult)
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void IsValid_ShouldReturnFalse_WhenLogDataIsNullOrWhitespace(string logData)
     {
         // Arrange
-        var criteria = new WriteLogRunSPCriteria(1, custId, 1, "", "", "", "");
+        var criteria = new WriteLogRunSPCriteria(logData);
 
         // Act
-        bool isValid = criteria.IsValid();
+        var result = criteria.IsValid();
 
         // Assert
-        Assert.Equal(expectedResult, isValid);
+        Assert.False(result);
     }
 }

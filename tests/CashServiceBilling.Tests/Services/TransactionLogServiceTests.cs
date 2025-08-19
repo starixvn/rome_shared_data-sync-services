@@ -1,3 +1,4 @@
+using CashServiceBilling.Criteria;
 using CashServiceBilling.Models;
 using CashServiceBilling.Services;
 using Fanex.Data.Repository;
@@ -7,115 +8,124 @@ namespace CashServiceBilling.Tests.Services;
 
 public class TransactionLogServiceTests
 {
-    private readonly Mock<IDynamicRepository> repositoryMock;
-    private readonly Mock<Fanex.Logging.ILogger> loggerMock;
+    private readonly Mock<IDynamicRepository> mockRepository;
+    private readonly Mock<Fanex.Logging.ILogger> mockLogger;
     private readonly TransactionLogService service;
 
     public TransactionLogServiceTests()
     {
-        repositoryMock = new Mock<IDynamicRepository>();
-        loggerMock = new Mock<Fanex.Logging.ILogger>();
-        service = new TransactionLogService(repositoryMock.Object, loggerMock.Object);
+        mockRepository = new Mock<IDynamicRepository>();
+        mockLogger = new Mock<Fanex.Logging.ILogger>();
+        service = new TransactionLogService(mockRepository.Object, mockLogger.Object);
     }
 
     [Fact]
-    public async Task WriteLog_ShouldReturnTrue_WhenRepositoryExecutionSucceeds()
+    public async Task WriteLog_Success_ReturnsTrue()
     {
         // Arrange
         var criteria = new Mock<INonQueryCommand>().Object;
-        repositoryMock.Setup(x => x.ExecuteAsync(criteria)).Returns(Task.FromResult(0));
+        mockRepository.Setup(r => r.ExecuteAsync(criteria)).Returns(Task.FromResult(0));
 
         // Act
         var result = await service.WriteLog(criteria);
 
         // Assert
         Assert.True(result);
-        repositoryMock.Verify(x => x.ExecuteAsync(criteria), Times.Once);
-        loggerMock.Verify(x => x.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>()), Times.Never);
+        mockRepository.Verify(r => r.ExecuteAsync(criteria), Times.Once);
+        mockLogger.Verify(l => l.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>()), Times.Never);
     }
 
     [Fact]
-    public async Task WriteLog_ShouldReturnFalse_AndLogError_WhenRepositoryExecutionFails()
+    public async Task WriteLog_Exception_ReturnsFalse()
     {
         // Arrange
-        var exception = new Exception("Test exception");
-        var criteria = Mock.Of<INonQueryCommand>(c => c.GetSettingKey() == "TestKey");
-        repositoryMock.Setup(x => x.ExecuteAsync(criteria)).ThrowsAsync(exception);
-        loggerMock.Setup(x => x.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>())).Returns(Task.CompletedTask);
+        var criteria = new Mock<INonQueryCommand>();
+        criteria.Setup(c => c.GetSettingKey()).Returns("TestKey");
+
+        mockRepository.Setup(r => r.ExecuteAsync(criteria.Object)).ThrowsAsync(new Exception("Test exception"));
+        mockLogger.Setup(l => l.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>())).Returns(Task.CompletedTask);
 
         // Act
-        var result = await service.WriteLog(criteria);
+        var result = await service.WriteLog(criteria.Object);
 
         // Assert
         Assert.False(result);
-        repositoryMock.Verify(x => x.ExecuteAsync(criteria), Times.Once);
-        loggerMock.Verify(x => x.ErrorAsync("TestKey failed.", exception), Times.Once);
+        mockRepository.Verify(r => r.ExecuteAsync(criteria.Object), Times.Once);
+        mockLogger.Verify(l => l.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>()), Times.Once);
     }
 
     [Fact]
-    public async Task WriteLogs_WithCustDBGroupId_ShouldCallWriteLog_ForEachLogEntry()
+    public async Task WriteLogs_WithCustomerGroupId_CallsWriteLogWithCorrectParameters()
     {
         // Arrange
+        short custDBGroupId = 1;
+        int batchSize = 2;
         var logs = new List<LogEntry>
-        {
-            new LogEntry { UserId = 1, CustId = 2, ActionId = 3, TrackingValueMask = "mask1", TrackingValueMask2 = "mask2", TrackingValue = "val1", TrackingValue2 = "val2", CustDBGroupId = 1 },
-            new LogEntry { UserId = 4, CustId = 5, ActionId = 6, TrackingValueMask = "mask3", TrackingValueMask2 = "mask4", TrackingValue = "val3", TrackingValue2 = "val4", CustDBGroupId = 1 }
-        };
+            {
+                new LogEntry { CustDBGroupId = custDBGroupId },
+                new LogEntry { CustDBGroupId = custDBGroupId },
+                new LogEntry { CustDBGroupId = custDBGroupId }
+            };
 
-        const short custDBGroupId = 1;
-        repositoryMock.Setup(x => x.ExecuteAsync(It.IsAny<INonQueryCommand>())).Returns(Task.FromResult(0));
+        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<WriteLogRunSPCriteria>())).Returns(Task.FromResult(0));
 
         // Act
-        await service.WriteLogs(logs, custDBGroupId);
+        await service.WriteLogs(logs, custDBGroupId, batchSize);
 
         // Assert
-        repositoryMock.Verify(x => x.ExecuteAsync(It.IsAny<INonQueryCommand>()), Times.Exactly(logs.Count));
+        // Should be called twice because we have 3 logs with batch size of 2 (2 batches)
+        mockRepository.Verify(r => r.ExecuteAsync(It.IsAny<WriteLogRunSPCriteria>()), Times.Exactly(2));
     }
 
     [Fact]
-    public async Task WriteLogs_WithCustDBGroupId_ShouldRetryWithProvidedGroupId_WhenFirstAttemptFails()
+    public async Task WriteLogs_WithFailedFirstAttempt_TriesAgain()
     {
         // Arrange
+        short custDBGroupId = 1;
+        int batchSize = 2;
         var logs = new List<LogEntry>
-        {
-            new LogEntry { UserId = 1, CustId = 2, ActionId = 3, TrackingValueMask = "mask1", TrackingValueMask2 = "mask2", TrackingValue = "val1", TrackingValue2 = "val2", CustDBGroupId = 1 }
-        };
+            {
+                new LogEntry { CustDBGroupId = custDBGroupId },
+                new LogEntry { CustDBGroupId = custDBGroupId }
+            };
 
-        const short custDBGroupId = 2;
+        var attempt = 0;
+        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<WriteLogRunSPCriteria>()))
+            .Callback(() => attempt++)
+            .Returns(() => attempt == 1
+                ? throw new Exception("First attempt failed")
+                : Task.FromResult(0));
 
-        // First attempt fails
-        repositoryMock.SetupSequence(x => x.ExecuteAsync(It.IsAny<INonQueryCommand>()))
-            .ThrowsAsync(new Exception("First attempt failed"))
-            .Returns(Task.FromResult(0));
-
-        loggerMock.Setup(x => x.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>())).Returns(Task.CompletedTask);
+        mockLogger.Setup(l => l.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>())).Returns(Task.CompletedTask);
 
         // Act
-        await service.WriteLogs(logs, custDBGroupId);
+        await service.WriteLogs(logs, custDBGroupId, batchSize);
 
         // Assert
-        repositoryMock.Verify(x => x.ExecuteAsync(It.IsAny<INonQueryCommand>()), Times.Exactly(2));
-        loggerMock.Verify(x => x.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>()), Times.Once);
+        // First attempt fails, second succeeds
+        mockRepository.Verify(r => r.ExecuteAsync(It.IsAny<WriteLogRunSPCriteria>()), Times.Exactly(2));
+        mockLogger.Verify(l => l.ErrorAsync(It.IsAny<string>(), It.IsAny<Exception>()), Times.Once);
     }
 
     [Fact]
-    public async Task WriteLogs_ShouldGroupByCustomerDbGroupId_AndCallWriteLogs()
+    public async Task WriteLogs_WithMultipleGroups_ProcessesAllGroups()
     {
         // Arrange
         var logs = new List<LogEntry>
-        {
-            new LogEntry { UserId = 1, CustId = 2, ActionId = 3, TrackingValueMask = "mask1", TrackingValueMask2 = "mask2", TrackingValue = "val1", TrackingValue2 = "val2", CustDBGroupId = 1 },
-            new LogEntry { UserId = 4, CustId = 5, ActionId = 6, TrackingValueMask = "mask3", TrackingValueMask2 = "mask4", TrackingValue = "val3", TrackingValue2 = "val4", CustDBGroupId = 1 },
-            new LogEntry { UserId = 7, CustId = 8, ActionId = 9, TrackingValueMask = "mask5", TrackingValueMask2 = "mask6", TrackingValue = "val5", TrackingValue2 = "val6", CustDBGroupId = 2 }
-        };
+            {
+                new LogEntry { CustDBGroupId = 1 },
+                new LogEntry { CustDBGroupId = 1 },
+                new LogEntry { CustDBGroupId = 2 },
+                new LogEntry { CustDBGroupId = 2 }
+            };
 
-        repositoryMock.Setup(x => x.ExecuteAsync(It.IsAny<INonQueryCommand>())).Returns(Task.FromResult(0));
+        mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<WriteLogRunSPCriteria>())).Returns(Task.FromResult(0));
 
         // Act
-        await service.WriteLogs(logs);
+        await service.WriteLogs(logs, 2);
 
         // Assert
-        // There should be 3 calls to ExecuteAsync (one for each log entry)
-        repositoryMock.Verify(x => x.ExecuteAsync(It.IsAny<INonQueryCommand>()), Times.Exactly(3));
+        // Should be called twice, once for each group
+        mockRepository.Verify(r => r.ExecuteAsync(It.IsAny<WriteLogRunSPCriteria>()), Times.Exactly(2));
     }
 }

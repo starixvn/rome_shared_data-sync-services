@@ -15,15 +15,18 @@
     <Setting Key="Task_CashService_AccumCreditReturn_YesterdayLoss_Adjust" SpName="Task_CashService_AccumCreditReturn_YesterdayLoss_Adjust" DbName="DBSIC.bodb02.wsv_CashService" />
     <Setting Key="CustDB_0_Age_CashAccumCredit_SyncData" SpName="Age_CashAccumCredit_SyncData" DbName="DBCUST.CustDB.wsv_CashService" />
     <Setting Key="WriteLog_CashService_UserLog_RunSP" SpName="WriteLog_CashService_UserLog_RunSP" DbName="DBLOG.bodb_CustomerLog.wsv_CashService" />
-    <Setting Key="CustDB_0_WriteLog_CashService_UserLog_RunSP" SpName="WriteLog_CashService_UserLog_RunSP" DbName="DBCUST.CustDB.wsv_CashService" />
+    <Setting Key="CustDB_0_WriteLog_CashService_UserLog_RunSP" SpName="WriteLog_CashService_UserLog_RunSP" DbName="DBCUST.bodb_CustomerLog.wsv_CashService" />
   </Function>
   <Function Name="Update Transaction Expired Status">
-      <Setting Key="Task_CashService_UpdateExpiredStatus" SpName="Task_CashService_UpdateExpiredStatus_uat2" DbName="DBSIC.bodb02.wsv_CashService" />
+      <Setting Key="Task_CashService_UpdateExpiredStatus" SpName="Task_CashService_UpdateExpiredStatus" DbName="DBSIC.bodb02.wsv_CashService" />
   </Function>
   <Function Name="Calculate Bonus">
     <Setting Key="Task_CashService_AgentSetting_Sel" SpName="Task_CashService_AgentSetting_Sel" DbName="DBCUST.AgencyCashService.wsv_CashService" />
     <Setting Key="Task_CashService_CashPromotionCal" SpName="Task_CashService_CashPromotionCal" DbName="DBAGE.bodb02.wsv_CashService" TimeOut="300" />
     <Setting Key="Task_CashService_BonusTransaction_Sel" SpName="Task_CashService_BonusTransaction_Sel" DbName="DBAGE.bodb02.wsv_CashService" />
     <Setting Key="SiteDB_3_Task_CashService_BonusTransaction_Ins" SpName="Task_CashService_BonusTransaction_Ins" DbName="DBSIC.bodb02.wsv_CashService" />
+  </Function>
+  <Function Name="Update Promotion Expired Status">
+      <Setting Key="Task_CashPromotion_UpdateExpiredStatus" SpName="Task_CashPromotion_UpdateExpiredStatus" DbName="DBSIC.bodb02.wsv_CashService" />
   </Function>
 </Functions>

@@ -38,7 +38,7 @@ public class TransactionServiceTests
         await service.UpdateExpiredStatus(isTest);
 
         // Assert
-        mockTransactionLogService.Verify(s => s.WriteLogs(logs), Times.Once);
+        mockTransactionLogService.Verify(s => s.WriteLogs(logs, 500), Times.Once);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class TransactionServiceTests
         await service.UpdateExpiredStatus(isTest);
 
         // Assert
-        mockTransactionLogService.Verify(s => s.WriteLogs(It.IsAny<IEnumerable<LogEntry>>()), Times.Never);
+        mockTransactionLogService.Verify(s => s.WriteLogs(It.IsAny<IEnumerable<LogEntry>>(), 500), Times.Never);
     }
 
     [Fact]

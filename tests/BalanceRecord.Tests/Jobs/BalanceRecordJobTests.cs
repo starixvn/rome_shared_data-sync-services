@@ -42,20 +42,21 @@ public class BalanceRecordJobTests
     }
 
     [Fact]
-    public async Task ExecuteJob_IsStopJobIsTrue_CallsLogInfo()
+    public async Task ExecuteJob_WhenIsStopJobFromCacheIsTrue_ReturnsFalse()
     {
         // Arrange
         balanceRecordService
-            .IsStopJob(Arg.Any<string>(), Arg.Any<bool>())
+            .IsStopJobFromCache(Arg.Any<string>(), Arg.Any<bool>())
             .Returns(Task.FromResult(true));
 
         // Act
-        await balanceRecordJob.ExecuteJob();
+        var result = await balanceRecordJob.ExecuteJob();
 
         // Assert
-        await loggerService.Received().Info(Arg.Is<string>(
-            arg => "[SiteDB01] is set stopped from DB." == arg
-        ));
+        Assert.False(result);
+        await balanceRecordService.Received(1).IsStopJobFromCache(scheduleJob.Name, scheduleJob.IsTest);
+        loggerService.Received(1).InfoConsole("{JobInfo} is set stopped from DB.", scheduleJob.JobInfo);
+        await balanceRecordService.DidNotReceive().GetLastRowInserted(Arg.Any<short>(), Arg.Any<bool>());
     }
 
     [Fact]
@@ -63,19 +64,19 @@ public class BalanceRecordJobTests
     {
         // Arrange
         balanceRecordService
-            .IsStopJob(Arg.Any<string>(), Arg.Any<bool>())
+            .IsStopJobFromCache(Arg.Any<string>(), Arg.Any<bool>())
             .Returns(Task.FromResult(false));
         balanceRecordService
             .GetLastRowInserted(Arg.Any<short>(), Arg.Any<bool>())
             .Returns(Task.FromResult(default(long?)));
 
         // Act
-        await balanceRecordJob.ExecuteJob();
+        var result = await balanceRecordJob.ExecuteJob();
 
         // Assert
-        await loggerService.Received().Info(Arg.Is<string>(
-            arg => "[SiteDB01]: LastRowInserted is NULL." == arg
-        ));
+        Assert.False(result);
+        await balanceRecordService.Received(1).IsStopJobFromCache(scheduleJob.Name, scheduleJob.IsTest);
+        loggerService.Received(1).InfoConsole("{JobInfo} LastRowInserted is NULL.", scheduleJob.JobInfo);
     }
 
     [Fact]

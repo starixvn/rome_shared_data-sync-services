@@ -12,13 +12,15 @@ namespace CashServiceBilling.Services.Tests
     {
         private readonly Mock<IDynamicRepository> _mockRepository;
         private readonly Mock<ILoggerService> _mockLogger;
+        private readonly Mock<ITransactionLogService> _mockTransactionLogService;
         private readonly CalculateBonusService _service;
 
         public CalculateBonusServiceTests()
         {
             _mockRepository = new Mock<IDynamicRepository>();
             _mockLogger = new Mock<ILoggerService>();
-            _service = new CalculateBonusService(_mockRepository.Object, _mockLogger.Object);
+            _mockTransactionLogService = new Mock<ITransactionLogService>();
+            _service = new CalculateBonusService(_mockRepository.Object, _mockLogger.Object, _mockTransactionLogService.Object);
         }
 
         [Fact]
@@ -234,11 +236,9 @@ namespace CashServiceBilling.Services.Tests
         }
 
         [Fact]
-        public async Task AddBonusTransactions_WhenBonusChanged_ShouldNotifyAlert()
+        public async Task AddBonusTransactions_ReturnsCorrectBonusChanged()
         {
             // Arrange
-            var jobSettings = new JobsSettingsModel { NotifyCategory = "Test" };
-
             _mockRepository.Setup(r => r.ExecuteAsync(It.IsAny<INonQueryCommand>()))
                 .Callback<INonQueryCommand>(criteria =>
                 {
@@ -247,13 +247,10 @@ namespace CashServiceBilling.Services.Tests
                 });
 
             // Act
-            await _service.AddBonusTransactions("test bonus", 1, jobSettings);
+            var result = await _service.AddBonusTransactionsAndWriteLog("test bonus", 1, DateTime.Today);
 
             // Assert
-            _mockLogger.Verify(l => l.Notify(
-                "[ALERT] Bonus transaction amount mismatch detected (same CustId, TransactionTypeID, Date). Logged to CashTransactionError for review.",
-                jobSettings.NotifyCategory),
-                Times.Once);
+            Assert.True(result);
         }
     }
 }
