@@ -1,8 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Builder;
 using Shared.Extensions;
+using Shared.FanexData.Extensions;
 using ResetPotentialWinLimit.Extensions;
 using ResetPotentialWinLimit.Models;
+using Shared.FanexData.Services;
+using Shared.Services;
 
 namespace ResetPotentialWinLimit;
 
@@ -19,6 +22,7 @@ public sealed class Startup
         services
             .AddONEBookUM(configuration)
             .AddFanexLogging(configuration)
+            .AddSingleton<ILoggerService, LoggerService>()
             .AddFanexDataWithSqlServer(configuration)
             .AddApplicationServices(configuration)
             .AddHealthChecks();

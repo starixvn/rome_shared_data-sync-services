@@ -3,12 +3,14 @@ WORKDIR /src
 
 # Copy csproj and restore as distinct layers
 COPY ./src/Shared/Shared.csproj ./Shared/Shared.csproj
+COPY ./src/FanexVault/FanexVault.csproj ./Shared/FanexVault.csproj
 COPY ./src/ConcurrentUser/ConcurrentUser.csproj ./ConcurrentUser/ConcurrentUser.csproj
 RUN dotnet nuget add source http://nuget.nexdev.net/api/v2
 RUN dotnet restore ConcurrentUser/ConcurrentUser.csproj -v n
 
 # Copy everything else and build
 COPY /src/Shared ./Shared
+COPY /src/FanexVault ./FanexVault
 COPY /src/ConcurrentUser ./ConcurrentUser
 WORKDIR /src/ConcurrentUser
 RUN dotnet publish -r linux-x64 --self-contained false -o /app

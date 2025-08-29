@@ -3,12 +3,14 @@ WORKDIR /src
 
 # Copy csproj and restore as distinct layers
 COPY ./src/Shared/Shared.csproj ./Shared/Shared.csproj
+COPY ./src/Shared.FanexData/Shared.FanexData.csproj ./Shared/Shared.FanexData.csproj
 COPY ./src/ResetPotentialWinLimit/ResetPotentialWinLimit.csproj ./ResetPotentialWinLimit/ResetPotentialWinLimit.csproj
 RUN dotnet nuget add source http://nuget.nexdev.net/api/v2
 RUN dotnet restore ResetPotentialWinLimit/ResetPotentialWinLimit.csproj -v n
 
 # Copy everything else and build
 COPY /src/Shared ./Shared
+COPY /src/Shared.FanexData ./Shared.FanexData
 COPY /src/ResetPotentialWinLimit ./ResetPotentialWinLimit
 WORKDIR /src/ResetPotentialWinLimit
 RUN dotnet publish -r linux-x64 --self-contained false -o /app

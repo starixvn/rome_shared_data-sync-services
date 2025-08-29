@@ -11,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
+    <ProjectReference Include="..\Shared.FanexData\Shared.FanexData.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\**">

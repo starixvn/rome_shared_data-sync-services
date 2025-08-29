@@ -3,12 +3,14 @@ WORKDIR /src
 
 # Copy csproj and restore as distinct layers
 COPY ./src/Shared/Shared.csproj ./Shared/Shared.csproj
+COPY ./src/Shared.FanexData/Shared.FanexData.csproj ./Shared/Shared.FanexData.csproj
 COPY ./src/CashServiceBilling/CashServiceBilling.csproj ./CashServiceBilling/CashServiceBilling.csproj
 RUN dotnet nuget add source http://nuget.nexdev.net/api/v2
 RUN dotnet restore CashServiceBilling/CashServiceBilling.csproj -v n
 
 # Copy everything else and build
 COPY /src/Shared ./Shared
+COPY /src/Shared.FanexData ./Shared.FanexData
 COPY /src/CashServiceBilling ./CashServiceBilling
 WORKDIR /src/CashServiceBilling
 RUN dotnet publish -r linux-x64 --self-contained false -o /app

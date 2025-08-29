@@ -2,6 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 using BalanceRecord.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Shared.Extensions;
+using Shared.FanexData.Extensions;
+using Shared.FanexData.Services;
+using Shared.Services;
 
 namespace BalanceRecord;
 
@@ -17,6 +20,7 @@ public sealed class Startup
         => services
             .AddONEBookUM(configuration)
             .AddFanexLogging(configuration)
+            .AddSingleton<ILoggerService, LoggerService>()
             .AddFanexDataWithSqlServer(configuration)
             .AddFanexCachingMemory()
             .AddApplicationServices(configuration)

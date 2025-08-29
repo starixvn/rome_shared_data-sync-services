@@ -1,7 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Fanex.Data;
-using Fanex.Data.Repository;
-using Fanex.Data.SqlServer;
 using Fanex.Logging;
 using Fanex.Logging.RabbitMQ;
 using Fanex.Logging.Sentry;
@@ -13,7 +10,6 @@ using ONEbook.UM.Helpers;
 using ONEbook.UM.Services;
 using ONEbook.UM.Transport;
 using Sentry;
-using Shared.Services;
 
 namespace Shared.Extensions;
 
@@ -38,8 +34,7 @@ public static class FanexLibsExtensions
             .Use(GetLogEngines(configuration));
 
         return services
-            .AddSingleton(Logger.Log)
-            .AddSingleton<ILoggerService, LoggerService>();
+            .AddSingleton(Logger.Log);
     }
 
     private static IEnumerable<ILogEngine> GetLogEngines(IConfiguration configuration)
@@ -58,24 +53,6 @@ public static class FanexLibsExtensions
                 Dsn = new Dsn(sentryUrl)
             });
         }
-    }
-
-    public static IServiceCollection AddFanexDataWithSqlServer(this IServiceCollection services, IConfiguration configuration)
-    {
-        var connectionStrings = configuration
-            .GetSection("ConnectionStrings")
-            .GetChildren()
-            .ToDictionary(
-                connection => connection.Key,
-                connection => new ConnectionConfiguration(connection.Key, connection.Value), StringComparer.OrdinalIgnoreCase);
-
-        DbSettingProviderManager
-            .StartNewSession()
-            .WithSqlServer("App_Data/SpNames.xml")
-            .Use(connectionStrings)
-            .Run();
-
-        return services.AddSingleton<IDynamicRepository, DynamicRepository>();
     }
 
     public static IServiceCollection AddFanexCachingMemory(this IServiceCollection services)

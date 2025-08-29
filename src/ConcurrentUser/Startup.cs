@@ -1,7 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using ConcurrentUser.Extensions;
+using Fanex.Data.SqlServer;
 using Microsoft.AspNetCore.Builder;
 using Shared.Extensions;
+using Shared.Services;
+using FanexVault.Services;
+using Fanex.Data.Repository;
 
 namespace ConcurrentUser;
 
@@ -17,7 +21,9 @@ public sealed class Startup
         => services
             .AddONEBookUM(configuration)
             .AddFanexLogging(configuration)
-            .AddFanexDataWithSqlServer(configuration)
+            .AddSingleton<ILoggerService, LoggerService>()
+            .AddFanexSql(configuration)
+            .AddSingleton<IDynamicRepository, DynamicRepository>()
             .AddApplicationServices(configuration)
             .AddHealthChecks();
 
