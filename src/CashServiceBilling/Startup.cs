@@ -4,6 +4,9 @@ using Shared.Extensions;
 using CashServiceBilling.Extensions;
 using Hangfire;
 using Hangfire.MemoryStorage;
+using Shared.FanexData.Extensions;
+using Shared.Services;
+using Shared.FanexData.Services;
 
 namespace CashServiceBilling;
 
@@ -20,6 +23,7 @@ public sealed class Startup
         services
             .AddONEBookUM(configuration)
             .AddFanexLogging(configuration)
+            .AddSingleton<ILoggerService, LoggerService>()
             .AddFanexDataWithSqlServer(configuration)
             .AddApplicationServices(configuration)
             .AddHealthChecks();

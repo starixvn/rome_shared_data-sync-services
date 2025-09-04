@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using WinlossLimit3rdGame.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Shared.Extensions;
+using Shared.FanexData.Services;
+using Shared.Services;
 
 namespace WinlossLimit3rdGame;
 
@@ -17,8 +19,9 @@ public sealed class Startup
         => services
             .AddONEBookUM(configuration)
             .AddFanexLogging(configuration)
+            .AddSingleton<ILoggerService, LoggerService>()
             .AddFanexCachingMemory()
-            .CustomizeFanexDataWithSqlServer(configuration)            
+            .CustomizeFanexDataWithSqlServer(configuration)
             .AddApplicationServices(configuration)
             .AddHealthChecks();
 

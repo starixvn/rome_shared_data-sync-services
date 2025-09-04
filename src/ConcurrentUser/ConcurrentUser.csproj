@@ -8,6 +8,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="6.1.0" />
+    <PackageReference Include="Fanex.Data.Repository" Version="4.3.2" />
+    <PackageReference Include="Fanex.Data.SqlServer" Version="4.3.2" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\**">
@@ -16,5 +18,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
+    <ProjectReference Include="..\FanexVault\FanexVault.csproj" />
   </ItemGroup>
 </Project>
