@@ -11,7 +11,6 @@
 
   <ItemGroup>
     <PackageReference Include="CompareNETObjects" Version="4.79.0" />
-    <PackageReference Include="Fanex.Data.Repository" Version="4.2.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
     <PackageReference Include="NSubstitute" Version="4.4.0" />
     <PackageReference Include="xunit" Version="2.4.2" />

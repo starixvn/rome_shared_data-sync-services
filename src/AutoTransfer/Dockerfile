@@ -3,14 +3,14 @@ WORKDIR /src
 
 # Copy csproj and restore as distinct layers
 COPY ./src/Shared/Shared.csproj ./Shared/Shared.csproj
-COPY ./src/Shared.FanexData/Shared.FanexData.csproj ./Shared/Shared.FanexData.csproj
+COPY ./src/FanexVault/FanexVault.csproj ./FanexVault/FanexVault.csproj
 COPY ./src/AutoTransfer/AutoTransfer.csproj ./AutoTransfer/AutoTransfer.csproj
 RUN dotnet nuget add source http://nuget.nexdev.net/api/v2
 RUN dotnet restore AutoTransfer/AutoTransfer.csproj -v n
 
 # Copy everything else and build
 COPY /src/Shared ./Shared
-COPY /src/Shared.FanexData ./Shared.FanexData
+COPY /src/FanexVault ./FanexVault
 COPY /src/AutoTransfer ./AutoTransfer
 WORKDIR /src/AutoTransfer
 RUN dotnet publish -r linux-x64 --self-contained false -o /app

@@ -1,10 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using AutoTransfer.Extensions;
 using AutoTransfer.Models;
+using Fanex.Data.Repository;
+using Fanex.Data.SqlServer;
+using FanexVault.Services;
 using Microsoft.AspNetCore.Builder;
 using Shared.Extensions;
-using Shared.FanexData.Extensions;
-using Shared.FanexData.Services;
 using Shared.Services;
 
 namespace AutoTransfer;
@@ -23,7 +24,8 @@ public sealed class Startup
             .AddONEBookUM(configuration)
             .AddFanexLogging(configuration)
             .AddSingleton<ILoggerService, LoggerService>()
-            .AddFanexDataWithSqlServer(configuration)
+            .AddFanexSql(configuration)
+            .AddSingleton<IDynamicRepository, DynamicRepository>()
             .AddApplicationServices(configuration)
             .AddHealthChecks();
 

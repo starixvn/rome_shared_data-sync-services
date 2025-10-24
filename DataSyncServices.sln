@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CashServiceBilling", "src\C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CashServiceBilling.Tests", "tests\CashServiceBilling.Tests\CashServiceBilling.Tests.csproj", "{AF062B90-02D9-5CFE-0580-8734B7A29B5B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FanexVault", "src\FanexVault\FanexVault.csproj", "{A2936077-C498-4F43-8363-C6E8A90D0109}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -185,6 +187,18 @@ Global
 		{AF062B90-02D9-5CFE-0580-8734B7A29B5B}.Release|x64.Build.0 = Release|Any CPU
 		{AF062B90-02D9-5CFE-0580-8734B7A29B5B}.Release|x86.ActiveCfg = Release|Any CPU
 		{AF062B90-02D9-5CFE-0580-8734B7A29B5B}.Release|x86.Build.0 = Release|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Debug|x64.Build.0 = Debug|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Debug|x86.Build.0 = Debug|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Release|x64.ActiveCfg = Release|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Release|x64.Build.0 = Release|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Release|x86.ActiveCfg = Release|Any CPU
+		{A2936077-C498-4F43-8363-C6E8A90D0109}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -202,6 +216,7 @@ Global
 		{53BCDF54-BA8F-678B-A9F2-FD4EA97FFCB5} = {C2650251-25EE-4C44-AB03-47FD893D2CAE}
 		{1E7D5AB4-83E9-90DB-8194-BCC61D160A31} = {DEC5059B-AB35-451E-97A3-DB1F892E6055}
 		{AF062B90-02D9-5CFE-0580-8734B7A29B5B} = {C2650251-25EE-4C44-AB03-47FD893D2CAE}
+		{A2936077-C498-4F43-8363-C6E8A90D0109} = {DEC5059B-AB35-451E-97A3-DB1F892E6055}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C6F98E0-241B-4E07-B501-237127693EE7}

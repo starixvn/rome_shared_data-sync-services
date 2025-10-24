@@ -13,7 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
-    <ProjectReference Include="..\Shared.FanexData\Shared.FanexData.csproj" />
+    <ProjectReference Include="..\FanexVault\FanexVault.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\**">
