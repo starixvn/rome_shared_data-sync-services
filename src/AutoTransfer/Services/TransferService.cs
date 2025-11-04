@@ -145,6 +145,7 @@ public sealed class TransferService : ITransferService
         catch (Exception e)
         {
             messages.Add(e.Message);
+            await Fanex.Logging.Logger.Log.ErrorAsync(e.Message, e);
         }
 
         return new ResultModel
