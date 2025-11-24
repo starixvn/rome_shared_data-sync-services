@@ -2,9 +2,6 @@ using ConcurrentUser.Criteria;
 using ConcurrentUser.Models;
 using Shared.Models;
 using Fanex.Data.Repository;
-using Fanex.Data;
-
-using System.Collections;
 namespace ConcurrentUser.Services;
 
 public interface IOnlineUserService
