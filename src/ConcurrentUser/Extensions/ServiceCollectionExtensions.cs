@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using ConcurrentUser.Jobs;
 using ConcurrentUser.Services;
-using Microsoft.Extensions.Hosting;
 using ONEbook.UM.Configurations;
 using ONEbook.UM.Services;
 using Shared.Configuration;
@@ -13,6 +12,23 @@ namespace ConcurrentUser.Extensions;
 [ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
 {
+    private static readonly Dictionary<string, Func<IServiceProvider, ScheduleJob, BackgroundServiceBase>> JobFactories = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["ConcurrentUser"] = (sp, job) => new ConcurrentUserJob(
+            job,
+            sp.GetRequiredService<ILoggerService>(),
+            sp.GetRequiredService<IMaintenanceService>(),
+            sp.GetRequiredService<UMClientConfiguration>(),
+            sp.GetRequiredService<IConcurrentUserService>()),
+
+        ["OnlineUser"] = (sp, job) => new OnlineUserJob(
+            job,
+            sp.GetRequiredService<ILoggerService>(),
+            sp.GetRequiredService<IMaintenanceService>(),
+            sp.GetRequiredService<UMClientConfiguration>(),
+            sp.GetRequiredService<IOnlineUserService>())
+    };
+
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Register services
@@ -22,33 +38,14 @@ public static class ServiceCollectionExtensions
         var activeJobs = configuration
             .GetSection("ScheduleJobs")
             .Get<ScheduleJob[]>()?
-            .Where(job => job.IsActive) ?? Array.Empty<ScheduleJob>();
+            .Where(job => job.IsActive && JobFactories.ContainsKey(job.Name))
+            ?? Array.Empty<ScheduleJob>();
 
         foreach (var job in activeJobs)
         {
-            services.AddSingleton<IHostedService>(sp => CreateHostedService(sp, job));
+            services.AddSingleton<IHostedService>(sp => JobFactories[job.Name](sp, job));
         }
 
         return services;
-    }
-
-    private static BackgroundServiceBase CreateHostedService(IServiceProvider sp, ScheduleJob job)
-    {
-        var loggerService = sp.GetRequiredService<ILoggerService>();
-        var maintenanceService = sp.GetRequiredService<IMaintenanceService>();
-        var umConfig = sp.GetRequiredService<UMClientConfiguration>();
-
-        return job.Name.ToLowerInvariant() switch
-        {
-            var name when name.Contains("concurrent user") => new ConcurrentUserJob(
-                job, loggerService, maintenanceService, umConfig,
-                sp.GetRequiredService<IConcurrentUserService>()),
-
-            var name when name.Contains("online user") => new OnlineUserJob(
-                job, loggerService, maintenanceService, umConfig,
-                sp.GetRequiredService<IOnlineUserService>()),
-
-            _ => throw new InvalidOperationException($"Unknown job type: {job.Name}")
-        };
     }
 }
