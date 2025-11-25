@@ -63,7 +63,7 @@ public class ConcurrentUserServiceTests
             var criteria = (InsertConcurrentUserCriteria)x[0];
             if (criteria != null)
             {
-                criteria.ErrCode = "0";
+                criteria.ErrCode =0;
                 criteria.ErrorMsg = "Su";
             }
         });

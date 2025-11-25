@@ -76,7 +76,7 @@ public class BalanceRecordJobTests
         // Assert
         Assert.False(result);
         await balanceRecordService.Received(1).IsStopJobFromCache(scheduleJob.Name, scheduleJob.IsTest);
-        loggerService.Received(1).InfoConsole("{JobInfo} LastRowInserted is NULL.", scheduleJob.JobInfo);
+        loggerService.Received(1).InfoConsole("{JobInfo}: LastRowInserted is NULL.", scheduleJob.JobInfo);
     }
 
     [Fact]
