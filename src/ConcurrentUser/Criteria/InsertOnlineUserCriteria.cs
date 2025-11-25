@@ -1,8 +1,6 @@
-using Fanex.Data.Repository;
-using System.Collections;
-using ConcurrentUser.Models;
 using System.Text;
-using System.Linq;
+using ConcurrentUser.Models;
+using Fanex.Data.Repository;
 
 namespace ConcurrentUser.Criteria;
 
