@@ -42,8 +42,14 @@ public sealed class OnlineUserJob : BackgroundServiceBase
 
     private async Task ExecuteJob()
     {
-        await loggerService.Info("Sync Online User Job Started");
         var users = await service.GetOnlineUser();
-        await service.InsertOnlineUser(users);
+        try
+        {
+            await service.InsertOnlineUser(users);
+        }
+        catch (Exception exception)
+        {
+            await loggerService.Error(exception, scheduleJob, "InsertOnlineUser");
+        }
     }
 }

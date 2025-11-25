@@ -27,7 +27,7 @@ public class OnlineUserService : IOnlineUserService
 
     public async Task<Result> InsertOnlineUser(IEnumerable<ConcurrentUserModel> users)
     {
-        var command = new InsertConcurrentUserCriteria(users, "");
+        var command = new InsertOnlineUserCriteria(users);
         await dynamicRepository.ExecuteAsync(command);
 
         return new Result(command.ErrCode.ToString(), command.ErrorMsg);
